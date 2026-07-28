@@ -255,15 +255,32 @@ class Context {
   }
 
   drawPolygon(points, stroke = '#ffffff', fill = '#ff0000') {
+    const selectedOption = Number(document.getElementById('transformation-order').value);
+
     let transformMatrix = null;
 
-    // Uncomment to test
-    // transformMatrix = this.#composeTransformMatrix([this.#T, this.#R, this.#S]); // Correct
-    // transformMatrix = this.#composeTransformMatrix([this.#T, this.#S, this.#R]); // Correct, but weird
-    // transformMatrix = this.#composeTransformMatrix([this.#R, this.#T, this.#S]); // Wrong
-    // transformMatrix = this.#composeTransformMatrix([this.#R, this.#S, this.#T]); // Wrong
-    // transformMatrix = this.#composeTransformMatrix([this.#S, this.#T, this.#R]); // Correct, but weird
-    // transformMatrix = this.#composeTransformMatrix([this.#S, this.#R, this.#T]); // Wrong
+    switch (selectedOption) {
+      case 1:
+        transformMatrix = this.#composeTransformMatrix([this.#T, this.#R, this.#S]); // Correct
+        break;
+      case 2:
+        transformMatrix = this.#composeTransformMatrix([this.#T, this.#S, this.#R]); // Correct, but weird
+        break;
+      case 3:
+        transformMatrix = this.#composeTransformMatrix([this.#R, this.#T, this.#S]); // Wrong
+        break;
+      case 4:
+        transformMatrix = this.#composeTransformMatrix([this.#R, this.#S, this.#T]); // Wrong
+        break;
+      case 5:
+        transformMatrix = this.#composeTransformMatrix([this.#S, this.#T, this.#R]); // Correct, but weird
+        break;
+      case 6:
+        transformMatrix = this.#composeTransformMatrix([this.#S, this.#R, this.#T]); // Wrong
+        break;
+      default:
+        break;
+    }
 
     this.#ctx.strokeStyle = stroke;
     this.#ctx.fillStyle = fill;

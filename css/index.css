@@ -6,6 +6,7 @@
 
 body {
   background-color: #181818;
+  color: #ffffff;
 }
 
 canvas {
@@ -13,4 +14,9 @@ canvas {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+#transformation-order {
+  padding: 5px;
+  margin-left: 5px;
 }

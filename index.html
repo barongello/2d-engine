@@ -10,6 +10,21 @@
 
 <body>
   <canvas id="canvas" width="720" height="405"></canvas>
+
+  <div>
+    Order of transformations (apply from right to left):
+
+    <select id="transformation-order">
+      <option value="0">Default (Translate, Rotate, Scale)</option>
+      <option value="1">Translate, Rotate, Scale</option>
+      <option value="2">Translate, Scale, Rotate</option>
+      <option value="3">Rotate, Translate, Scale</option>
+      <option value="4">Rotate, Scale, Translate</option>
+      <option value="5">Scale, Translate, Rotate</option>
+      <option value="6">Scale, Rotate, Translate</option>
+    </select>
+  </div>
+
   <script type="text/javascript" src="js/lib/utility.js"></script>
   <script type="text/javascript" src="js/lib/matrix.js"></script>
   <script type="text/javascript" src="js/lib/geometry.js"></script>
