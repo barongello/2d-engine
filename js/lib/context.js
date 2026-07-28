@@ -144,8 +144,8 @@ class Context {
     this.#R.set(0, 0, cos);
     this.#R.set(1, 1, cos);
 
-    this.#R.set(0, 1, sin);
-    this.#R.set(1, 0, -sin);
+    this.#R.set(0, 1, -sin);
+    this.#R.set(1, 0, sin);
 
     this.#transformMatrix = this.#composeTransformMatrix([this.#T, this.#R, this.#S]);
   }
