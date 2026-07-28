@@ -255,12 +255,15 @@ class Context {
   }
 
   drawPolygon(points, stroke = '#ffffff', fill = '#ff0000') {
-    // const transformMatrix = this.#composeTransformMatrix([this.#T, this.#R, this.#S]); // Correct
-    // const transformMatrix = this.#composeTransformMatrix([this.#T, this.#S, this.#R]); // Correct, but weird
-    // const transformMatrix = this.#composeTransformMatrix([this.#R, this.#T, this.#S]); // Wrong
-    // const transformMatrix = this.#composeTransformMatrix([this.#R, this.#S, this.#T]); // Wrong
-    // const transformMatrix = this.#composeTransformMatrix([this.#S, this.#T, this.#R]); // Wrong
-    // const transformMatrix = this.#composeTransformMatrix([this.#S, this.#R, this.#T]); // Wrong
+    let transformMatrix = null;
+
+    // Uncomment to test
+    // transformMatrix = this.#composeTransformMatrix([this.#T, this.#R, this.#S]); // Correct
+    // transformMatrix = this.#composeTransformMatrix([this.#T, this.#S, this.#R]); // Correct, but weird
+    // transformMatrix = this.#composeTransformMatrix([this.#R, this.#T, this.#S]); // Wrong
+    // transformMatrix = this.#composeTransformMatrix([this.#R, this.#S, this.#T]); // Wrong
+    // transformMatrix = this.#composeTransformMatrix([this.#S, this.#T, this.#R]); // Correct, but weird
+    // transformMatrix = this.#composeTransformMatrix([this.#S, this.#R, this.#T]); // Wrong
 
     this.#ctx.strokeStyle = stroke;
     this.#ctx.fillStyle = fill;
@@ -268,7 +271,7 @@ class Context {
     this.#ctx.beginPath();
       for (let i = 0; i < points.length; ++i) {
         const point = points[i];
-        const newPoint = this.#applyMatrices([this.#transformMatrix], point);
+        const newPoint = this.#applyMatrices([transformMatrix !== null ? transformMatrix : this.#transformMatrix], point);
 
         if (i === 0) {
           this.#ctx.moveTo(newPoint.get(0, 0), newPoint.get(1, 0));
