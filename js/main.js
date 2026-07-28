@@ -51,7 +51,11 @@ function animationLoop(time = 0) {
 
 animationLoop();
 
-document.addEventListener('mousemove', event => {
+document.addEventListener('pointermove', event => {
+  if (event.target !== canvas) {
+    return;
+  }
+
   vector1.set(0, 0, event.clientX - canvas.width * 0.5);
   vector1.set(1, 0, event.clientY - canvas.height * 0.5);
 });
