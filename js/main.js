@@ -40,7 +40,7 @@ function animationLoop(time = 0) {
   );
 
   square4.setOffset(
-    square4.offset().x + Math.sin(-angle),
+    square4.offset().x + Math.sin(-angle) * 0.5,
     square4.offset().y
   );
 
