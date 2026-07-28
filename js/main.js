@@ -1,4 +1,7 @@
 const canvas = document.getElementById('canvas');
+const animationSpeed = document.getElementById('animation-speed');
+const animationSpeedValue = document.getElementById('animation-speed-value');
+
 const ctx = new Context(canvas, 720, 405);
 
 const vector1 = Matrix.newFromArray([[50], [100], [1]]);
@@ -11,13 +14,12 @@ const square4 = new Square(200, 100, 10, 10, '#ffffff', '#ff00ff');
 square2.setOffset(100, 100);
 square4.setOffset(35, 35);
 
+let speedMultiplier = 1;
 let lastTime = 0;
 let angle = 0;
 
-function animationLoop(time = 0) {
-  const dt = time - lastTime;
-
-  lastTime = time;
+function drawFrame(dt = 0) {
+  dt *= speedMultiplier;
 
   ctx.clearBackground();
   ctx.drawGrid();
@@ -45,6 +47,14 @@ function animationLoop(time = 0) {
   );
 
   angle = (angle + 0.1) % (Math.PI * 2);
+}
+
+function animationLoop(time = 0) {
+  const dt = time - lastTime;
+
+  lastTime = time;
+
+  drawFrame(dt);
 
   requestAnimationFrame(animationLoop);
 }
@@ -58,4 +68,10 @@ document.addEventListener('pointermove', event => {
 
   vector1.set(0, 0, event.clientX - canvas.width * 0.5);
   vector1.set(1, 0, event.clientY - canvas.height * 0.5);
+});
+
+animationSpeed.addEventListener('input', event => {
+  speedMultiplier = Number(animationSpeed.value);
+
+  animationSpeedValue.innerText = animationSpeed.value;
 });

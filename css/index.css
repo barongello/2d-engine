@@ -16,6 +16,10 @@ canvas {
   image-rendering: crisp-edges;
 }
 
+#animation-speed {
+  width: 720px;
+}
+
 #transformation-order {
   padding: 5px;
   margin-left: 5px;
