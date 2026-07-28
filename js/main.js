@@ -12,6 +12,7 @@ square2.setOffset(100, 100);
 square4.setOffset(35, 35);
 
 let lastTime = 0;
+let angle = 0;
 
 function animationLoop(time = 0) {
   const dt = time - lastTime;
@@ -31,7 +32,19 @@ function animationLoop(time = 0) {
   square1.setRotation(square1.rotation() + dt * 0.025);
   square2.setRotation(square2.rotation() + dt * 0.035);
   square3.setRotation(square3.rotation() + dt * 0.05);
-  square4.setRotation(square4.rotation() + dt * 0.075);
+  square4.setRotation(square4.rotation() + dt * -0.075);
+
+  square2.setOffset(
+    square2.offset().x + Math.sin(angle),
+    square2.offset().y
+  );
+
+  square4.setOffset(
+    square4.offset().x + Math.sin(-angle),
+    square4.offset().y
+  );
+
+  angle = (angle + 0.1) % (Math.PI * 2);
 
   requestAnimationFrame(animationLoop);
 }
