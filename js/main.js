@@ -31,7 +31,7 @@ function drawFrame(dt = 0) {
 
   ctx.drawVector(vector1);
 
-  square1.setRotation(square1.rotation() + dt * 0.025);
+  square1.setRotation(square1.rotation() + dt * -0.025);
   square2.setRotation(square2.rotation() + dt * 0.035);
   square3.setRotation(square3.rotation() + dt * 0.05);
   square4.setRotation(square4.rotation() + dt * -0.075);
