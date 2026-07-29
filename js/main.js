@@ -1,5 +1,6 @@
 const FRAME_TIME = 1000 / 60;
 const MAX_FRAME_TIME = 1000 / 30;
+const ZOOM_STEP = 0.1;
 
 const canvas = document.getElementById('canvas');
 const animationSpeed = document.getElementById('animation-speed');
@@ -7,6 +8,8 @@ const animationSpeedValue = document.getElementById('animation-speed-value');
 const transformationOrder = document.getElementById('transformation-order');
 
 const ctx = new Context(canvas, 720, 405);
+
+ctx.setOrigin(ctx.width() * 0.5, ctx.height() * 0.5);
 
 const vector1 = Matrix.newFromArray([[50], [100], [1]]);
 
@@ -76,11 +79,13 @@ function updateFrame(dt) {
 }
 
 function drawFrame(dt) {
-  ctx.clearBackground();
-  ctx.drawGrid();
-  ctx.drawChildren();
-  ctx.drawVector(vector1);
-  ctx.drawFPS(fps);
+  ctx.drawBegin();
+    ctx.drawBackground();
+    ctx.drawGrid();
+    ctx.drawChildren();
+    ctx.drawVector(vector1);
+    ctx.drawFPS(fps);
+  ctx.drawEnd();
 }
 
 function animationLoop(time = 0) {
@@ -109,13 +114,60 @@ function animationLoop(time = 0) {
 
 animationLoop();
 
-document.addEventListener('pointermove', event => {
-  if (event.target !== canvas) {
+let pointerDown = null;
+
+canvas.addEventListener('pointerdown', event => {
+  if (event.pointerType !== 'mouse') {
     return;
   }
 
-  vector1.set(0, 0, event.clientX - canvas.width * 0.5);
-  vector1.set(1, 0, event.clientY - canvas.height * 0.5);
+  if (event.button !== 0) {
+    return;
+  }
+
+  pointerDown = {
+    x: event.layerX,
+    y: event.layerY
+  };
+});
+
+canvas.addEventListener('pointermove', event => {
+  if (pointerDown !== null) {
+    const dx = event.layerX - pointerDown.x;
+    const dy = event.layerY - pointerDown.y;
+
+    ctx.setOrigin(
+      ctx.origin().x + dx,
+      ctx.origin().y + dy
+    );
+
+    pointerDown.x = event.layerX;
+    pointerDown.y = event.layerY;
+  }
+
+  vector1.set(0, 0, event.layerX - ctx.origin().x);
+  vector1.set(1, 0, event.layerY - ctx.origin().y);
+});
+
+canvas.addEventListener('pointerup', event => {
+  if (event.pointerType !== 'mouse') {
+    return;
+  }
+
+  pointerDown = null;
+});
+
+canvas.addEventListener('wheel', event => {
+  let amount = 0;
+
+  if (event.deltaY < 0) {
+    amount = ZOOM_STEP;
+  }
+  else if (event.deltaY > 0 && ctx.zoom().x > 2 * ZOOM_STEP && ctx.zoom().y > 2 * ZOOM_STEP) {
+    amount = -ZOOM_STEP;
+  }
+
+  ctx.setZoom(ctx.zoom().x + amount, ctx.zoom().y + amount);
 });
 
 animationSpeed.addEventListener('input', event => {

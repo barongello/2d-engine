@@ -4,6 +4,8 @@ class Context {
   #height = 0;
   #width = 0;
   #origin = { x: 0, y: 0 };
+  #zoom = { x: 1, y: 1 };
+  #rotation = 0;
   #base = null;
   #R = null;
   #S = null;
@@ -12,6 +14,8 @@ class Context {
   #transformationMatrix = null;
   #transformationMatrixHistory = [];
   #children = [];
+  #logs = [];
+  #logLevel = 0;
 
   #applyMatrices(matrices, vector) {
     let newVector = vector.clone();
@@ -73,27 +77,14 @@ class Context {
       throw new Error('Invalid canvas');
     }
 
-    if (isValidNumber(width) === false || width < 1) {
-      throw new Error('Invalid width');
-    }
-
-    if (isValidNumber(height) === false || height < 1) {
-      throw new Error('Invalid height');
-    }
-
-    canvas.width = width;
-    canvas.height = height;
-
     this.#canvas = canvas;
+
+    this.setWidth(width);
+    this.setHeight(height);
+    
     this.#ctx = canvas.getContext('2d');
 
     this.#ctx.imageSmoothingEnabled = false;
-
-    this.#height = height;
-    this.#width = width;
-
-    this.#origin.x = width * 0.5;
-    this.#origin.y = height * 0.5;
 
     this.#base = Matrix.newIdentity(3);
     this.#R = Matrix.newIdentity(3);
@@ -103,6 +94,94 @@ class Context {
     this.#transformationMatrix = Matrix.newSquare(3);
 
     this.setTransformationMatrixOrder(0);
+  }
+
+  width() {
+    return this.#width;
+  }
+
+  setWidth(width) {
+    if (isValidNumber(width) === false) {
+      throw new Error('Invalid width');
+    }
+
+    this.#canvas.width = width;
+
+    this.#width = width;
+
+    return this;
+  }
+
+  height() {
+    return this.#height;
+  }
+
+  setHeight(height) {
+    if (isValidNumber(height) === false) {
+      throw new Error('Invalid height');
+    }
+
+    this.#canvas.height = height;
+
+    this.#height = height;
+
+    return this;
+  }
+
+  origin() {
+    return {
+      ...this.#origin
+    };
+  }
+
+  setOrigin(x, y) {
+    if (isValidNumber(x) === false) {
+      throw new Error('Invalid x');
+    }
+
+    if (isValidNumber(y) === false) {
+      throw new Error('Invalid y');
+    }
+
+    this.#origin.x = x;
+    this.#origin.y = y;
+
+    return this;
+  }
+
+  zoom() {
+    return {
+      ...this.#zoom
+    };
+  }
+
+  setZoom(x, y) {
+    if (isValidNumber(x) === false) {
+      throw new Error('Invalid x');
+    }
+
+    if (isValidNumber(y) === false) {
+      throw new Error('Invalid y');
+    }
+
+    this.#zoom.x = x;
+    this.#zoom.y = y;
+
+    return this;
+  }
+
+  rotation() {
+    return this.#rotation;
+  }
+
+  setRotation(angle) {
+    if (isValidNumber(angle) === false) {
+      throw new Error('Invalid angle');
+    }
+
+    this.#rotation = angle % 360;
+
+    return this;
   }
 
   setTransformationMatrixOrder(option) {
@@ -128,6 +207,8 @@ class Context {
     }
 
     this.#updateTransformationMatrix();
+
+    return this;
   }
 
   save() {
@@ -209,7 +290,15 @@ class Context {
     this.#children.push(object);
   }
 
-  clearBackground() {
+  drawBegin() {
+    // TODO
+  }
+
+  drawEnd() {
+    // TODO
+  }
+
+  drawBackground() {
     this.#ctx.fillStyle = "#313131";
 
     this.#ctx.fillRect(0, 0, this.#width, this.#height);
@@ -311,6 +400,8 @@ class Context {
   drawChildren() {
     this.save();
       this.translate(this.#origin.x, this.#origin.y);
+      this.rotate(this.#rotation);
+      this.scale(this.#zoom.x, this.#zoom.y);
 
       for (const child of this.#children) {
         child.draw(ctx);

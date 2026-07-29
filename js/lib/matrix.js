@@ -100,14 +100,14 @@ class Matrix {
     return matrix.clone();
   }
 
-  static dump(matrix) {
+  static dump(matrix, toString = false) {
     if (matrix instanceof Matrix === false) {
       console.error('Matrix is invalid');
 
       return;
     }
 
-    matrix.dump();
+    matrix.dump(toString);
   }
 
   static getArray(matrix) {
@@ -340,7 +340,7 @@ class Matrix {
     return this.#cols;
   }
 
-  dump() {
+  dump(toString = false) {
     const lines = [];
 
     for (let i = 0; i < this.#rows; ++i) {
@@ -380,7 +380,13 @@ class Matrix {
       lines.push(line);
     }
 
-    console.log(lines.join('\n'));
+    const dump = lines.join('\n');
+
+    if (toString === true) {
+      return dump;
+    }
+
+    console.log(dump);
 
     return this;
   }
