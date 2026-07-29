@@ -52,7 +52,11 @@ function drawFrame(dt = 0) {
     rectangle4.offset().y
   );
 
-  angle = (angle + 0.1) % (Math.PI * 2);
+  const scale = Math.sin(angle * 0.2);
+
+  star1.setScale(scale, scale);
+
+  angle += 0.1;
 }
 
 function animationLoop(time = 0) {

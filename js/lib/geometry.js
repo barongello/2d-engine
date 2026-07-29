@@ -25,6 +25,7 @@ class Figure {
   #size = { w: 0, h: 0 };
   #offset = { x: 0, y: 0 };
   #rotation = 0;
+  #scale = { x: 1, y: 1 };
   #strokeColor = '#ffffff';
   #fillColor = '#ff0000';
   #points = [];
@@ -134,6 +135,25 @@ class Figure {
     this.#rotation = angle % 360;
   }
 
+  scale() {
+    return {
+      ...this.#scale
+    };
+  }
+
+  setScale(x, y) {
+    if (isValidNumber(x) === false) {
+      throw new Error('Invalid x');
+    }
+
+    if (isValidNumber(y) === false) {
+      throw new Error('Invalid y');
+    }
+
+    this.#scale.x = x;
+    this.#scale.y = y;
+  }
+
   strokeColor() {
     return this.#strokeColor;
   }
@@ -222,6 +242,7 @@ class Rectangle extends Figure {
     ctx.save();
       ctx.translate(this.position().x, this.position().y);
       ctx.rotate(this.rotation());
+      ctx.scale(this.scale().x, this.scale().y);
       ctx.drawPolygon(
         this.points(),
         this.strokeColor(),
@@ -290,6 +311,7 @@ class Star extends Figure {
     ctx.save();
       ctx.translate(this.position().x, this.position().y);
       ctx.rotate(this.rotation());
+      ctx.scale(this.scale().x, this.scale().y);
       ctx.drawPolygon(
         this.points(),
         this.strokeColor(),
