@@ -92,3 +92,8 @@ transformationOrder.addEventListener('change', event => {
 
   ctx.setTransformationMatrixOrder(option);
 });
+
+// TODO
+// Add objects and draw them recursively
+// Add FPS
+// Fix the angle that increases with frames and don't follow speed modifier
