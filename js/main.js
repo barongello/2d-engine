@@ -6,13 +6,15 @@ const ctx = new Context(canvas, 720, 405);
 
 const vector1 = Matrix.newFromArray([[50], [100], [1]]);
 
-const square1 = new Square(0, 0, 50, 50, '#ffffff', '#ff0000');
-const square2 = new Square(0, 0, 50, 50, '#ffffff', '#0000ff');
-const square3 = new Square(200, 100, 15, 15, '#ffffff', '#ffff00');
-const square4 = new Square(200, 100, 10, 10, '#ffffff', '#ff00ff');
+const rectangle1 = new Rectangle(0, 0, 50, 50, '#ffffff', '#ff0000');
+const rectangle2 = new Rectangle(0, 0, 50, 50, '#ffffff', '#0000ff');
+const rectangle3 = new Rectangle(200, 100, 15, 15, '#ffffff', '#ffff00');
+const rectangle4 = new Rectangle(200, 100, 10, 10, '#ffffff', '#ff00ff');
 
-square2.setOffset(100, 100);
-square4.setOffset(35, 35);
+const star1 = new Star(200, -100, 5, 50, 25);
+
+rectangle2.setOffset(100, 100);
+rectangle4.setOffset(35, 35);
 
 let speedMultiplier = 1;
 let lastTime = 0;
@@ -24,26 +26,30 @@ function drawFrame(dt = 0) {
   ctx.clearBackground();
   ctx.drawGrid();
 
-  square1.draw(ctx);
-  square2.draw(ctx);
-  square3.draw(ctx);
-  square4.draw(ctx);
+  rectangle1.draw(ctx);
+  rectangle2.draw(ctx);
+  rectangle3.draw(ctx);
+  rectangle4.draw(ctx);
+
+  star1.draw(ctx);
 
   ctx.drawVector(vector1);
 
-  square1.setRotation(square1.rotation() + dt * -0.025);
-  square2.setRotation(square2.rotation() + dt * 0.035);
-  square3.setRotation(square3.rotation() + dt * 0.05);
-  square4.setRotation(square4.rotation() + dt * -0.075);
+  rectangle1.setRotation(rectangle1.rotation() + dt * -0.025);
+  rectangle2.setRotation(rectangle2.rotation() + dt * 0.035);
+  rectangle3.setRotation(rectangle3.rotation() + dt * 0.05);
+  rectangle4.setRotation(rectangle4.rotation() + dt * -0.075);
 
-  square2.setOffset(
-    square2.offset().x + Math.sin(angle),
-    square2.offset().y
+  star1.setRotation(star1.rotation() + dt * -0.175);
+
+  rectangle2.setOffset(
+    rectangle2.offset().x + Math.sin(angle),
+    rectangle2.offset().y
   );
 
-  square4.setOffset(
-    square4.offset().x + Math.sin(-angle) * 0.5,
-    square4.offset().y
+  rectangle4.setOffset(
+    rectangle4.offset().x + Math.sin(-angle) * 0.5,
+    rectangle4.offset().y
   );
 
   angle = (angle + 0.1) % (Math.PI * 2);

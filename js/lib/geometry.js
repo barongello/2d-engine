@@ -19,7 +19,7 @@ const ANCHORS = [
   ANCHOR_BOTTOM_LEFT, ANCHOR_BOTTOM_CENTER, ANCHOR_BOTTOM_RIGHT
 ];
 
-class Square {
+class Figure {
   #anchor = ANCHOR_MIDDLE_CENTER;
   #position = { x: 0, y: 0 };
   #size = { w: 0, h: 0 };
@@ -27,74 +27,15 @@ class Square {
   #rotation = 0;
   #strokeColor = '#ffffff';
   #fillColor = '#ff0000';
+  #points = [];
 
-  #top() {
-    let y = this.#offset.y;
-
-    if ((this.#anchor & ANCHOR_MIDDLE) !== 0) {
-      y -= this.#size.h * 0.5;
-    }
-    else if ((this.#anchor & ANCHOR_BOTTOM) !== 0) {
-      y -= this.#size.h;
-    }
-
-    return y;
-  }
-
-  #bottom() {
-    let y = this.#offset.y;
-
-    if ((this.#anchor & ANCHOR_TOP) !== 0) {
-      y += this.#size.h;
-    }
-    else if ((this.#anchor & ANCHOR_MIDDLE) !== 0) {
-      y += this.#size.h * 0.5;
-    }
-
-    return y;
-  }
-
-  #left() {
-    let x = this.#offset.x;
-
-    if ((this.#anchor & ANCHOR_CENTER) !== 0) {
-      x -= this.#size.w * 0.5;
-    }
-    else if ((this.#anchor & ANCHOR_RIGHT) !== 0) {
-      x -= this.#size.w;
-    }
-
-    return x;
-  }
-
-  #right() {
-    let x = this.#offset.x;
-
-    if ((this.#anchor & ANCHOR_LEFT) !== 0) {
-      x += this.#size.w;
-    }
-    else if ((this.#anchor & ANCHOR_CENTER) !== 0) {
-      x += this.#size.w * 0.5;
-    }
-
-    return x;
-  }
-
-  constructor(x, y, w, h, strokeColor = '#ffffff', fillColor = '#ff0000') {
+  constructor(x, y, strokeColor, fillColor) {
     if (isValidNumber(x) === false) {
       throw new Error('Invalid x');
     }
 
     if (isValidNumber(y) === false) {
       throw new Error('Invalid y');
-    }
-
-    if (isValidNumber(w) === false || w < 0) {
-      throw new Error('Invalid w');
-    }
-
-    if (isValidNumber(h) === false || h < 0) {
-      throw new Error('Invalid h');
     }
 
     if (typeof strokeColor !== 'string') {
@@ -108,39 +49,8 @@ class Square {
     this.#position.x = x;
     this.#position.y = y;
 
-    this.#size.w = w;
-    this.#size.h = h;
-
     this.#strokeColor = strokeColor;
     this.#fillColor = fillColor;
-  }
-
-  topLeft() {
-    const top = this.#top();
-    const left = this.#left();
-
-    return Matrix.newFromArray([[left], [top], [1]]);
-  }
-
-  topRight() {
-    const top = this.#top();
-    const right = this.#right();
-
-    return Matrix.newFromArray([[right], [top], [1]]);
-  }
-
-  bottomLeft() {
-    const bottom = this.#bottom();
-    const left = this.#left();
-
-    return Matrix.newFromArray([[left], [bottom], [1]]);
-  }
-
-  bottomRight() {
-    const bottom = this.#bottom();
-    const right = this.#right();
-
-    return Matrix.newFromArray([[right], [bottom], [1]]);
   }
 
   anchor() {
@@ -153,6 +63,44 @@ class Square {
     }
 
     this.#anchor = anchor;
+  }
+
+  position() {
+    return {
+      ...this.#position
+    };
+  }
+
+  setPosition(x, y) {
+    if (isValidNumber(x) === false) {
+      throw new Error('Invalid x');
+    }
+
+    if (isValidNumber(y) === false) {
+      throw new Error('Invalid y');
+    }
+
+    this.#position.x = x;
+    this.#position.y = y;
+  }
+
+  size() {
+    return {
+      ...this.#size
+    };
+  }
+
+  setSize(w, h) {
+    if (isValidNumber(w) === false || w <= 0) {
+      throw new Error('Invalid w');
+    }
+
+    if (isValidNumber(h) === false || h <= 0) {
+      throw new Error('Invalid h');
+    }
+
+    this.#size.w = w;
+    this.#size.h = h;
   }
 
   offset() {
@@ -210,19 +158,142 @@ class Square {
     this.#fillColor = color;
   }
 
+  points() {
+    let translateX = this.#offset.x;
+    let translateY = this.#offset.y;
+
+    if ((this.#anchor & ANCHOR_TOP) !== 0) {
+      translateY += this.#size.h * 0.5;
+    }
+    else if ((this.#anchor & ANCHOR_BOTTOM) !== 0) {
+      translateY -= this.#size.h * 0.5;
+    }
+
+    if ((this.#anchor & ANCHOR_LEFT) !== 0) {
+      translateX += this.#size.w * 0.5;
+    }
+    else if ((this.#anchor & ANCHOR_RIGHT) !== 0) {
+      translateX -= this.#size.w * 0.5;
+    }
+
+    const translateMatrix = Matrix.newFromArray([[translateX], [translateY], [0]]);
+
+    const points = [];
+
+    for (const point of this.#points) {
+      const newPoint = point.clone();
+      
+      newPoint.addMatrix(translateMatrix);
+
+      points.push(newPoint);
+    }
+
+    return points;
+  }
+
+  addPoint(point) {
+    if (point instanceof Matrix === false) {
+      throw new Error('Invalid point');
+    }
+
+    this.#points.push(point);
+  }
+}
+
+class Rectangle extends Figure {
+  constructor(x, y, w, h, strokeColor = '#ffffff', fillColor = '#ff0000') {
+    super(x, y, strokeColor, fillColor);
+
+    this.setSize(w, h);
+
+    const topLeft = Matrix.newFromArray([[-w * 0.5], [-h * 0.5], [1]]);
+    const topRight = Matrix.newFromArray([[w * 0.5], [-h * 0.5], [1]]);
+    const bottomLeft = Matrix.newFromArray([[-w * 0.5], [h * 0.5], [1]]);
+    const bottomRight = Matrix.newFromArray([[w * 0.5], [h * 0.5], [1]]);
+
+    // Add points clockwise
+    this.addPoint(topLeft);
+    this.addPoint(topRight);
+    this.addPoint(bottomRight);
+    this.addPoint(bottomLeft);
+  }
+
   draw(ctx) {
     ctx.save();
-      ctx.translate(this.#position.x, this.#position.y);
-      ctx.rotate(this.#rotation);
+      ctx.translate(this.position().x, this.position().y);
+      ctx.rotate(this.rotation());
       ctx.drawPolygon(
-        [
-          this.topLeft(),
-          this.bottomLeft(),
-          this.bottomRight(),
-          this.topRight()
-        ],
-        this.#strokeColor,
-        this.#fillColor
+        this.points(),
+        this.strokeColor(),
+        this.fillColor()
+      );
+    ctx.restore();
+  }
+}
+
+class Star extends Figure {
+  constructor(x, y, n, or, ir, strokeColor = '#00ffff', fillColor = '#ffff00') {
+    super(x, y, strokeColor, fillColor);
+
+    if (isValidInteger(n) === false || n <= 0) {
+      throw new Error('Invalid n');
+    }
+
+    if (isValidNumber(or) === false || or < 0) {
+      throw new Error('Invalid or');
+    }
+
+    if (isValidNumber(ir) === false || ir < 0) {
+      throw new Error('Invalid ir');
+    } 
+
+    let top = Infinity;
+    let left = Infinity;
+    let bottom = -Infinity;
+    let right = -Infinity;
+
+    for (let i = 0; i < 2 * n; ++i) {
+      const angle = -Math.PI * 0.5 + i * Math.PI / n;
+      const r = (i & 1) === 0 ? or : ir;
+
+      const x = r * Math.cos(angle);
+      const y = r * Math.sin(angle);
+
+      if (x < left) {
+        left = x;
+      }
+
+      if (x > right) {
+        right = x;
+      }
+
+      if (y < top) {
+        top = y;
+      }
+
+      if (y > bottom) {
+        bottom = y;
+      }
+
+      const point = Matrix.newFromArray([[x], [y], [1]]);
+
+      this.addPoint(point);
+    }
+
+    const w = right - left;
+    const h = bottom - top;
+
+    this.setSize(w, h);
+  }
+
+  draw(ctx) {
+    ctx.save();
+      ctx.translate(this.position().x, this.position().y);
+      ctx.rotate(this.rotation());
+      ctx.drawPolygon(
+        this.points(),
+        this.strokeColor(),
+        this.fillColor()
       );
     ctx.restore();
   }

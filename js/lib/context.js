@@ -302,17 +302,4 @@ class Context {
     this.#ctx.fill();
     this.#ctx.stroke();
   }
-
-  drawSquare(square) {
-    if (square instanceof Square === false) {
-      return;
-    }
-
-    const topLeft = square.topLeft();
-    const topRight = square.topRight();
-    const bottomLeft = square.bottomLeft();
-    const bottomRight = square.bottomRight();
-
-    this.drawPolygon([topLeft, bottomLeft, bottomRight, topRight]);
-  }
 }

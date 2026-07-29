@@ -509,7 +509,7 @@ class Matrix {
 
   makeIdentity() {
     if (this.#rows !== this.#cols) {
-      console.error('This matrix is not square');
+      console.error('This matrix is not rectangle');
 
       return this;
     }
@@ -525,7 +525,7 @@ class Matrix {
 
   determinant() {
     if (this.#rows !== this.#cols) {
-      console.error('This matrix is not square');
+      console.error('This matrix is not rectangle');
 
       return 0;
     }
@@ -543,7 +543,7 @@ class Matrix {
 
   inverse() {
     if (this.#rows !== this.#cols) {
-      console.error('This matrix is not square');
+      console.error('This matrix is not rectangle');
 
       return this;
     }
@@ -665,7 +665,7 @@ class Matrix {
     }
 
     if (this.#rows !== this.#cols) {
-      console.error('This matrix is not square');
+      console.error('This matrix is not rectangle');
 
       return this;
     }
