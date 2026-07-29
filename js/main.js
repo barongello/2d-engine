@@ -1,6 +1,7 @@
 const canvas = document.getElementById('canvas');
 const animationSpeed = document.getElementById('animation-speed');
 const animationSpeedValue = document.getElementById('animation-speed-value');
+const transformationOrder = document.getElementById('transformation-order');
 
 const ctx = new Context(canvas, 720, 405);
 
@@ -20,7 +21,7 @@ let speedMultiplier = 1;
 let lastTime = 0;
 let angle = 0;
 
-function drawFrame(dt = 0) {
+function drawFrame(time, dt) {
   dt *= speedMultiplier;
 
   ctx.clearBackground();
@@ -57,6 +58,7 @@ function drawFrame(dt = 0) {
   star1.setScale(scale, scale);
 
   angle += 0.1;
+  angle = time;
 }
 
 function animationLoop(time = 0) {
@@ -64,7 +66,7 @@ function animationLoop(time = 0) {
 
   lastTime = time;
 
-  drawFrame(dt);
+  drawFrame(time, dt);
 
   requestAnimationFrame(animationLoop);
 }
@@ -84,4 +86,10 @@ animationSpeed.addEventListener('input', event => {
   speedMultiplier = Number(animationSpeed.value);
 
   animationSpeedValue.innerText = animationSpeed.value;
+});
+
+transformationOrder.addEventListener('change', event => {
+  const option = Number(transformationOrder.value);
+
+  ctx.setTransformationMatrixOrder(option);
 });

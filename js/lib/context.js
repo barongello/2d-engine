@@ -7,6 +7,7 @@ class Context {
   #R = null;
   #S = null;
   #T = null;
+  #transformationMatrixOrder = [];
   #transformationMatrix = null;
   #transformationMatrixHistory = [];
 
@@ -42,59 +43,10 @@ class Context {
     return newMatrix;
   }
 
-  #applyTRS(vector) {
-    return this.#applyMatrices([this.#T, this.#R, this.#S], vector);
-  }
+  #updateTransformationMatrix() {
+    const newTransformationMatrix = this.#composeTransformationMatrix(this.#transformationMatrixOrder);
 
-  #applyTSR(vector) {
-    return this.#applyMatrices([this.#T, this.#S, this.#R], vector);
-  }
-
-  #applyRTS(vector) {
-    return this.#applyMatrices([this.#R, this.#T, this.#S], vector);
-  }
-
-  #applyRST(vector) {
-    return this.#applyMatrices([this.#R, this.#S, this.#T], vector);
-  }
-
-  #applySTR(vector) {
-    return this.#applyMatrices([this.#S, this.#T, this.#R], vector);
-  }
-
-  #applySRT(vector) {
-    return this.#applyMatrices([this.#S, this.#R, this.#T], vector);
-  }
-
-  #getTransformationMatrix() {
-    const selectedOption = Number(document.getElementById('transformation-order').value);
-
-    let transformationMatrix = null;
-
-    switch (selectedOption) {
-      case 1:
-        transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#R, this.#S]); // Correct
-        break;
-      case 2:
-        transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#S, this.#R]); // Correct, but weird
-        break;
-      case 3:
-        transformationMatrix = this.#composeTransformationMatrix([this.#R, this.#T, this.#S]); // Wrong
-        break;
-      case 4:
-        transformationMatrix = this.#composeTransformationMatrix([this.#R, this.#S, this.#T]); // Wrong
-        break;
-      case 5:
-        transformationMatrix = this.#composeTransformationMatrix([this.#S, this.#T, this.#R]); // Correct, but weird
-        break;
-      case 6:
-        transformationMatrix = this.#composeTransformationMatrix([this.#S, this.#R, this.#T]); // Wrong
-        break;
-      default:
-        break;
-    }
-
-    return transformationMatrix;
+    this.#transformationMatrix.copyFromMatrix(newTransformationMatrix);
   }
 
   constructor(canvas, width, height) {
@@ -128,9 +80,36 @@ class Context {
     this.#S = Matrix.newIdentity(3);
     this.#T = Matrix.newIdentity(3);
 
-    this.#transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#R, this.#S]);
+    this.#transformationMatrix = Matrix.newSquare(3);
+
+    this.setTransformationMatrixOrder(0);
 
     this.translate(this.#origin.x, this.#origin.y);
+  }
+
+  setTransformationMatrixOrder(option) {
+    switch (option) {
+      case 1:
+        this.#transformationMatrixOrder = [this.#T, this.#S, this.#R]; // Correct, but weird
+        break;
+      case 2:
+        this.#transformationMatrixOrder = [this.#R, this.#T, this.#S]; // Wrong
+        break;
+      case 3:
+        this.#transformationMatrixOrder = [this.#R, this.#S, this.#T]; // Wrong
+        break;
+      case 4:
+        this.#transformationMatrixOrder = [this.#S, this.#T, this.#R]; // Correct, but weird
+        break;
+      case 5:
+        this.#transformationMatrixOrder = [this.#S, this.#R, this.#T]; // Wrong
+        break;
+      default:
+        this.#transformationMatrixOrder = [this.#T, this.#R, this.#S]; // Correct
+        break;
+    }
+
+    this.#updateTransformationMatrix();
   }
 
   save() {
@@ -151,17 +130,17 @@ class Context {
 
     const historyEntry = this.#transformationMatrixHistory.pop();
 
-    this.#R = historyEntry.R;
-    this.#S = historyEntry.S;
-    this.#T = historyEntry.T;
-    this.#transformationMatrix = historyEntry.transformationMatrix;
+    this.#R.copyFromMatrix(historyEntry.R);
+    this.#S.copyFromMatrix(historyEntry.S);
+    this.#T.copyFromMatrix(historyEntry.T);
+    this.#transformationMatrix.copyFromMatrix(historyEntry.transformationMatrix);
   }
 
   scale(x = 1, y = 1) {
     this.#S.set(0, 0, this.#S.get(0, 0) * x);
     this.#S.set(1, 1, this.#S.get(1, 1) * y);
 
-    this.#transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#R, this.#S]);
+    this.#updateTransformationMatrix();
   }
 
   rotate(deg = 0) {
@@ -178,14 +157,14 @@ class Context {
     this.#R.set(0, 1, -sin);
     this.#R.set(1, 0, sin);
 
-    this.#transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#R, this.#S]);
+    this.#updateTransformationMatrix();
   }
 
   translate(x = 0, y = 0) {
     this.#T.set(0, 2, this.#T.get(0, 2) + x);
     this.#T.set(1, 2, this.#T.get(1, 2) + y);
 
-    this.#transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#R, this.#S]);
+    this.#updateTransformationMatrix();
   }
 
   clearBackground() {
@@ -245,12 +224,10 @@ class Context {
   }
 
   drawVector(vector) {
-    const transformationMatrix = this.#getTransformationMatrix() ?? this.#transformationMatrix;
-
     const vectorOrigin = Matrix.newFromArray([[0], [0], [1]]);
 
-    const newVectorOrigin = this.#applyMatrices([transformationMatrix], vectorOrigin);
-    const newVector = this.#applyMatrices([transformationMatrix], vector);
+    const newVectorOrigin = this.#applyMatrices([this.#transformationMatrix], vectorOrigin);
+    const newVector = this.#applyMatrices([this.#transformationMatrix], vector);
 
     this.#ctx.strokeStyle = '#ffffff';
 
@@ -269,11 +246,11 @@ class Context {
       this.translate(vector.get(0, 0), vector.get(1, 0));
       this.rotate(45);
 
-      const newVectorTip1 = this.#applyMatrices([transformationMatrix], vectorTip);
+      const newVectorTip1 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
 
       this.rotate(-90);
 
-      const newVectorTip2 = this.#applyMatrices([transformationMatrix], vectorTip);
+      const newVectorTip2 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
     this.restore();
 
     this.#ctx.beginPath();
@@ -288,15 +265,13 @@ class Context {
   }
 
   drawPolygon(points, stroke = '#ffffff', fill = '#ff0000') {
-    const transformationMatrix = this.#getTransformationMatrix() ?? this.#transformationMatrix;
-
     this.#ctx.strokeStyle = stroke;
     this.#ctx.fillStyle = fill;
 
     this.#ctx.beginPath();
       for (let i = 0; i < points.length; ++i) {
         const point = points[i];
-        const newPoint = this.#applyMatrices([transformationMatrix], point);
+        const newPoint = this.#applyMatrices([this.#transformationMatrix], point);
 
         if (i === 0) {
           this.#ctx.moveTo(newPoint.get(0, 0), newPoint.get(1, 0));
