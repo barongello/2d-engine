@@ -131,5 +131,4 @@ transformationOrder.addEventListener('change', event => {
 });
 
 // TODO
-// Add objects and draw them recursively
 // Store transformations log to show step by step
