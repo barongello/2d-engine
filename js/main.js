@@ -11,26 +11,34 @@ const ctx = new Context(canvas, 720, 405);
 const vector1 = Matrix.newFromArray([[50], [100], [1]]);
 
 const rectangle1 = new Rectangle(0, 0, 50, 50, '#ffffff', '#ff0000');
-const rectangle2 = new Rectangle(0, 0, 50, 50, '#ffffff', '#0000ff');
+
+ctx.addChild(rectangle1);
+
+const container1 = new Container(0, 0);
+const rectangle2 = new Rectangle(100, 100, 50, 50, '#ffffff', '#0000ff');
+
+container1.addChild(rectangle2);
+ctx.addChild(container1);
+
 const rectangle3 = new Rectangle(200, 100, 15, 15, '#ffffff', '#ffff00');
-const rectangle4 = new Rectangle(200, 100, 10, 10, '#ffffff', '#ff00ff');
+
+ctx.addChild(rectangle3);
+
+const container2 = new Container(200, 100);
+const rectangle4 = new Rectangle(35, 35, 10, 10, '#ffffff', '#ff00ff');
+
+container2.addChild(rectangle4);
+ctx.addChild(container2);
 
 const star1 = new Star(200, -100, 5, 50, 25);
 
-rectangle2.setOffset(100, 100);
-rectangle4.setOffset(35, 35);
-
-const rectangle2BaseOffset = rectangle2.offset().x;
-const rectangle4BaseOffset = rectangle4.offset().x;
-
-const rectangle2Amplitude = rectangle2BaseOffset * 0.15;
-const rectangle4Amplitude = rectangle4BaseOffset / 7;
-
-ctx.addChild(rectangle1);
-ctx.addChild(rectangle2);
-ctx.addChild(rectangle3);
-ctx.addChild(rectangle4);
 ctx.addChild(star1);
+
+const rectangle2BasePosition = rectangle2.position().x;
+const rectangle4BasePosition = rectangle4.position().x;
+
+const rectangle2Amplitude = rectangle2BasePosition * 0.15;
+const rectangle4Amplitude = rectangle4BasePosition / 7;
 
 let speedMultiplier = 1;
 let fps = 0;
@@ -44,20 +52,20 @@ function updateFrame(dt) {
   dt *= speedMultiplier;
 
   rectangle1.setRotation(rectangle1.rotation() + dt * -0.025);
-  rectangle2.setRotation(rectangle2.rotation() + dt * 0.035);
+  container1.setRotation(container1.rotation() + dt * 0.035);
   rectangle3.setRotation(rectangle3.rotation() + dt * 0.05);
-  rectangle4.setRotation(rectangle4.rotation() + dt * -0.075);
+  container2.setRotation(container2.rotation() + dt * -0.075);
 
   star1.setRotation(star1.rotation() + dt * -0.175);
 
-  rectangle2.setOffset(
-    rectangle2BaseOffset + Math.sin(angle) * rectangle2Amplitude,
-    rectangle2.offset().y
+  rectangle2.setPosition(
+    rectangle2BasePosition + Math.sin(angle) * rectangle2Amplitude,
+    rectangle2.position().y
   );
 
-  rectangle4.setOffset(
-    rectangle4BaseOffset + Math.sin(-angle) * 0.5 * rectangle4Amplitude,
-    rectangle4.offset().y
+  rectangle4.setPosition(
+    rectangle4BasePosition + Math.sin(-angle) * 0.5 * rectangle4Amplitude,
+    rectangle4.position().y
   );
 
   const scale = Math.sin(angle * 0.2);
@@ -72,7 +80,6 @@ function drawFrame(dt) {
   ctx.drawGrid();
   ctx.drawChildren();
   ctx.drawVector(vector1);
-
   ctx.drawFPS(fps);
 }
 

@@ -4,6 +4,7 @@ class Context {
   #height = 0;
   #width = 0;
   #origin = { x: 0, y: 0 };
+  #base = null;
   #R = null;
   #S = null;
   #T = null;
@@ -24,10 +25,25 @@ class Context {
     return newVector;
   }
 
-  #composeTransformationMatrix(matrices) {
-    if (matrices.length === 0) {
+  #matrixForKey(key) {
+    switch (key) {
+      case 'T':
+        return this.#T;
+      case 'R':
+        return this.#R;
+      case 'S':
+        return this.#S;
+    }
+
+    return Matrix.newIdentity(3);
+  }
+
+  #composeTransformationMatrix(orderKeys) {
+    if (orderKeys.length === 0) {
       return Matrix.newIdentity(3);
     }
+
+    const matrices = orderKeys.map(key => this.#matrixForKey(key));
 
     if (matrices.length === 1) {
       return matrices[0].clone();
@@ -47,7 +63,9 @@ class Context {
   #updateTransformationMatrix() {
     const newTransformationMatrix = this.#composeTransformationMatrix(this.#transformationMatrixOrder);
 
-    this.#transformationMatrix.copyFromMatrix(newTransformationMatrix);
+    this.#transformationMatrix.copyFromMatrix(
+      Matrix.multiplyMatrices(this.#base, newTransformationMatrix)
+    );
   }
 
   constructor(canvas, width, height) {
@@ -77,6 +95,7 @@ class Context {
     this.#origin.x = width * 0.5;
     this.#origin.y = height * 0.5;
 
+    this.#base = Matrix.newIdentity(3);
     this.#R = Matrix.newIdentity(3);
     this.#S = Matrix.newIdentity(3);
     this.#T = Matrix.newIdentity(3);
@@ -89,22 +108,22 @@ class Context {
   setTransformationMatrixOrder(option) {
     switch (option) {
       case 1:
-        this.#transformationMatrixOrder = [this.#T, this.#S, this.#R]; // Correct, but weird
+        this.#transformationMatrixOrder = ['T', 'S', 'R']; // Correct, but weird
         break;
       case 2:
-        this.#transformationMatrixOrder = [this.#R, this.#T, this.#S]; // Wrong
+        this.#transformationMatrixOrder = ['R', 'T', 'S']; // Wrong
         break;
       case 3:
-        this.#transformationMatrixOrder = [this.#R, this.#S, this.#T]; // Wrong
+        this.#transformationMatrixOrder = ['R', 'S', 'T']; // Wrong
         break;
       case 4:
-        this.#transformationMatrixOrder = [this.#S, this.#T, this.#R]; // Correct, but weird
+        this.#transformationMatrixOrder = ['S', 'T', 'R']; // Correct, but weird
         break;
       case 5:
-        this.#transformationMatrixOrder = [this.#S, this.#R, this.#T]; // Wrong
+        this.#transformationMatrixOrder = ['S', 'R', 'T']; // Wrong
         break;
       default:
-        this.#transformationMatrixOrder = [this.#T, this.#R, this.#S]; // Correct
+        this.#transformationMatrixOrder = ['T', 'R', 'S']; // Correct
         break;
     }
 
@@ -113,13 +132,21 @@ class Context {
 
   save() {
     const historyEntry = {
+      base: this.#base.clone(),
       R: this.#R.clone(),
       S: this.#S.clone(),
-      T: this.#T.clone(),
-      transformationMatrix: this.#transformationMatrix.clone()
+      T: this.#T.clone()
     };
 
     this.#transformationMatrixHistory.push(historyEntry);
+
+    this.#base.copyFromMatrix(this.#transformationMatrix);
+
+    this.#R.makeIdentity();
+    this.#S.makeIdentity();
+    this.#T.makeIdentity();
+
+    this.#updateTransformationMatrix();
   }
 
   restore() {
@@ -129,10 +156,12 @@ class Context {
 
     const historyEntry = this.#transformationMatrixHistory.pop();
 
+    this.#base.copyFromMatrix(historyEntry.base);
     this.#R.copyFromMatrix(historyEntry.R);
     this.#S.copyFromMatrix(historyEntry.S);
     this.#T.copyFromMatrix(historyEntry.T);
-    this.#transformationMatrix.copyFromMatrix(historyEntry.transformationMatrix);
+
+    this.#updateTransformationMatrix();
   }
 
   scale(x = 1, y = 1) {

@@ -118,7 +118,6 @@ class Container extends BaseObject {
 class Figure extends BaseObject {
   #anchor = ANCHORS.MIDDLE_CENTER;
   #size = { w: 0, h: 0 };
-  #offset = { x: 0, y: 0 };
   #strokeColor = '#ffffff';
   #fillColor = '#ff0000';
   #points = [];
@@ -169,25 +168,6 @@ class Figure extends BaseObject {
     this.#size.h = h;
   }
 
-  offset() {
-    return {
-      ...this.#offset
-    };
-  }
-
-  setOffset(x, y) {
-    if (isValidNumber(x) === false) {
-      throw new Error('Invalid x');
-    }
-
-    if (isValidNumber(y) === false) {
-      throw new Error('Invalid y');
-    }
-
-    this.#offset.x = x;
-    this.#offset.y = y;
-  }
-
   strokeColor() {
     return this.#strokeColor;
   }
@@ -213,21 +193,21 @@ class Figure extends BaseObject {
   }
 
   points() {
-    let translateX = this.#offset.x;
-    let translateY = this.#offset.y;
+    let translateX = 0;
+    let translateY = 0;
 
     if ((this.#anchor & ANCHOR_TOP) !== 0) {
-      translateY += this.#size.h * 0.5;
+      translateY = this.#size.h * 0.5;
     }
     else if ((this.#anchor & ANCHOR_BOTTOM) !== 0) {
-      translateY -= this.#size.h * 0.5;
+      translateY = -this.#size.h * 0.5;
     }
 
     if ((this.#anchor & ANCHOR_LEFT) !== 0) {
-      translateX += this.#size.w * 0.5;
+      translateX = this.#size.w * 0.5;
     }
     else if ((this.#anchor & ANCHOR_RIGHT) !== 0) {
-      translateX -= this.#size.w * 0.5;
+      translateX = -this.#size.w * 0.5;
     }
 
     const translateMatrix = Matrix.newFromArray([[translateX], [translateY], [0]]);
