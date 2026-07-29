@@ -253,8 +253,6 @@ class Context {
 
     this.#transformationMatrixHistory.push(historyEntry);
 
-    this.#scope = scope;
-
     this.#base.copyFromMatrix(this.#transformationMatrix);
 
     this.#R.makeIdentity();
@@ -262,6 +260,8 @@ class Context {
     this.#T.makeIdentity();
 
     this.#updateTransformationMatrix('Saving');
+
+    this.#scope = scope;
 
     ++this.#logLevel;
   }
