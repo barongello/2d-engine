@@ -10,6 +10,7 @@ class Context {
   #transformationMatrixOrder = [];
   #transformationMatrix = null;
   #transformationMatrixHistory = [];
+  #children = [];
 
   #applyMatrices(matrices, vector) {
     let newVector = vector.clone();
@@ -83,8 +84,6 @@ class Context {
     this.#transformationMatrix = Matrix.newSquare(3);
 
     this.setTransformationMatrixOrder(0);
-
-    this.translate(this.#origin.x, this.#origin.y);
   }
 
   setTransformationMatrixOrder(option) {
@@ -167,6 +166,20 @@ class Context {
     this.#updateTransformationMatrix();
   }
 
+  children() {
+    return [
+      ...this.#children
+    ];
+  }
+
+  addChild(object) {
+    if (object instanceof BaseObject === false) {
+      throw new Error('Invalid object');
+    }
+
+    this.#children.push(object);
+  }
+
   clearBackground() {
     this.#ctx.fillStyle = "#313131";
 
@@ -224,25 +237,27 @@ class Context {
   }
 
   drawVector(vector) {
-    const vectorOrigin = Matrix.newFromArray([[0], [0], [1]]);
-
-    const newVectorOrigin = this.#applyMatrices([this.#transformationMatrix], vectorOrigin);
-    const newVector = this.#applyMatrices([this.#transformationMatrix], vector);
-
-    this.#ctx.strokeStyle = '#ffffff';
-
-    this.#ctx.beginPath();
-      this.#ctx.moveTo(newVectorOrigin.get(0, 0), newVectorOrigin.get(1, 0));
-      this.#ctx.lineTo(newVector.get(0, 0), newVector.get(1, 0));
-    this.#ctx.stroke();
-
-    const vectorTip = vector.clone();
-
-    vectorTip
-      .multiplyScalar(-0.15)
-      .set(2, 0, 1);
-
     this.save();
+      this.translate(this.#origin.x, this.#origin.y);
+
+      const vectorOrigin = Matrix.newFromArray([[0], [0], [1]]);
+
+      const newVectorOrigin = this.#applyMatrices([this.#transformationMatrix], vectorOrigin);
+      const newVector = this.#applyMatrices([this.#transformationMatrix], vector);
+
+      this.#ctx.strokeStyle = '#ffffff';
+
+      this.#ctx.beginPath();
+        this.#ctx.moveTo(newVectorOrigin.get(0, 0), newVectorOrigin.get(1, 0));
+        this.#ctx.lineTo(newVector.get(0, 0), newVector.get(1, 0));
+      this.#ctx.stroke();
+
+      const vectorTip = vector.clone();
+
+      vectorTip
+        .multiplyScalar(-0.15)
+        .set(2, 0, 1);
+
       this.translate(vector.get(0, 0), vector.get(1, 0));
       this.rotate(45);
 
@@ -262,6 +277,16 @@ class Context {
       this.#ctx.moveTo(newVector.get(0, 0), newVector.get(1, 0));
       this.#ctx.lineTo(newVectorTip2.get(0, 0), newVectorTip2.get(1, 0));
     this.#ctx.stroke();
+  }
+
+  drawChildren() {
+    this.save();
+      this.translate(this.#origin.x, this.#origin.y);
+
+      for (const child of this.#children) {
+        child.draw(ctx);
+      }
+    this.restore();
   }
 
   drawPolygon(points, stroke = '#ffffff', fill = '#ff0000') {

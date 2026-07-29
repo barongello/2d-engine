@@ -26,6 +26,12 @@ const rectangle4BaseOffset = rectangle4.offset().x;
 const rectangle2Amplitude = rectangle2BaseOffset * 0.15;
 const rectangle4Amplitude = rectangle4BaseOffset / 7;
 
+ctx.addChild(rectangle1);
+ctx.addChild(rectangle2);
+ctx.addChild(rectangle3);
+ctx.addChild(rectangle4);
+ctx.addChild(star1);
+
 let speedMultiplier = 1;
 let fps = 0;
 let fpsCounter = 0;
@@ -64,14 +70,7 @@ function updateFrame(dt) {
 function drawFrame(dt) {
   ctx.clearBackground();
   ctx.drawGrid();
-
-  rectangle1.draw(ctx);
-  rectangle2.draw(ctx);
-  rectangle3.draw(ctx);
-  rectangle4.draw(ctx);
-
-  star1.draw(ctx);
-
+  ctx.drawChildren();
   ctx.drawVector(vector1);
 
   ctx.drawFPS(fps);

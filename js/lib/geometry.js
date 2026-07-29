@@ -17,51 +17,13 @@ const ANCHORS = Object.freeze({
   BOTTOM_RIGHT:  0b100_100
 });
 
-class Figure {
-  #anchor = ANCHORS.MIDDLE_CENTER;
+class BaseObject {
   #position = { x: 0, y: 0 };
-  #size = { w: 0, h: 0 };
-  #offset = { x: 0, y: 0 };
   #rotation = 0;
   #scale = { x: 1, y: 1 };
-  #strokeColor = '#ffffff';
-  #fillColor = '#ff0000';
-  #points = [];
 
-  constructor(x, y, strokeColor, fillColor) {
-    if (isValidNumber(x) === false) {
-      throw new Error('Invalid x');
-    }
-
-    if (isValidNumber(y) === false) {
-      throw new Error('Invalid y');
-    }
-
-    if (typeof strokeColor !== 'string') {
-      throw new Error('Invalid stroke color');
-    }
-
-    if (typeof fillColor !== 'string') {
-      throw new Error('Invalid fill color');
-    }
-
-    this.#position.x = x;
-    this.#position.y = y;
-
-    this.#strokeColor = strokeColor;
-    this.#fillColor = fillColor;
-  }
-
-  anchor() {
-    return this.#anchor;
-  }
-
-  setAnchor(anchor) {
-    if (Object.values(ANCHORS).includes(anchor) === false) {
-      return;
-    }
-
-    this.#anchor = anchor;
+  constructor(x, y) {
+    this.setPosition(x, y);
   }
 
   position() {
@@ -81,6 +43,111 @@ class Figure {
 
     this.#position.x = x;
     this.#position.y = y;
+  }
+
+  rotation() {
+    return this.#rotation;
+  }
+
+  setRotation(angle) {
+    if (isValidNumber(angle) === false) {
+      throw new Error('Invalid angle');
+    }
+
+    this.#rotation = angle % 360;
+  }
+
+  scale() {
+    return {
+      ...this.#scale
+    };
+  }
+
+  setScale(x, y) {
+    if (isValidNumber(x) === false) {
+      throw new Error('Invalid x');
+    }
+
+    if (isValidNumber(y) === false) {
+      throw new Error('Invalid y');
+    }
+
+    this.#scale.x = x;
+    this.#scale.y = y;
+  }
+}
+
+class Container extends BaseObject {
+  #children = [];
+
+  constructor(x, y) {
+    super(x, y);
+  }
+
+  children() {
+    return [
+      ...this.#children
+    ];
+  }
+
+  addChild(object) {
+    if (object instanceof BaseObject === false) {
+      throw new Error('Invalid object');
+    }
+
+    this.#children.push(object);
+  }
+
+  draw(ctx) {
+    if (ctx instanceof Context === false) {
+      throw new Error('Invalid ctx');
+    }
+
+    ctx.save();
+      ctx.translate(this.position().x, this.position().y);
+      ctx.rotate(this.rotation());
+      ctx.scale(this.scale().x, this.scale().y);
+
+      for (const child of this.#children) {
+        child.draw(ctx);
+      }
+    ctx.restore();
+  }
+}
+
+class Figure extends BaseObject {
+  #anchor = ANCHORS.MIDDLE_CENTER;
+  #size = { w: 0, h: 0 };
+  #offset = { x: 0, y: 0 };
+  #strokeColor = '#ffffff';
+  #fillColor = '#ff0000';
+  #points = [];
+
+  constructor(x, y, strokeColor, fillColor) {
+    super(x, y);
+
+    if (typeof strokeColor !== 'string') {
+      throw new Error('Invalid stroke color');
+    }
+
+    if (typeof fillColor !== 'string') {
+      throw new Error('Invalid fill color');
+    }
+
+    this.#strokeColor = strokeColor;
+    this.#fillColor = fillColor;
+  }
+
+  anchor() {
+    return this.#anchor;
+  }
+
+  setAnchor(anchor) {
+    if (Object.values(ANCHORS).includes(anchor) === false) {
+      return;
+    }
+
+    this.#anchor = anchor;
   }
 
   size() {
@@ -119,37 +186,6 @@ class Figure {
 
     this.#offset.x = x;
     this.#offset.y = y;
-  }
-
-  rotation() {
-    return this.#rotation;
-  }
-
-  setRotation(angle) {
-    if (isValidNumber(angle) === false) {
-      throw new Error('Invalid angle');
-    }
-
-    this.#rotation = angle % 360;
-  }
-
-  scale() {
-    return {
-      ...this.#scale
-    };
-  }
-
-  setScale(x, y) {
-    if (isValidNumber(x) === false) {
-      throw new Error('Invalid x');
-    }
-
-    if (isValidNumber(y) === false) {
-      throw new Error('Invalid y');
-    }
-
-    this.#scale.x = x;
-    this.#scale.y = y;
   }
 
   strokeColor() {
@@ -216,6 +252,20 @@ class Figure {
 
     this.#points.push(point);
   }
+
+  draw(ctx) {
+    ctx.save();
+      ctx.translate(this.position().x, this.position().y);
+      ctx.rotate(this.rotation());
+      ctx.scale(this.scale().x, this.scale().y);
+
+      ctx.drawPolygon(
+        this.points(),
+        this.strokeColor(),
+        this.fillColor()
+      );
+    ctx.restore();
+  }
 }
 
 class Rectangle extends Figure {
@@ -234,19 +284,6 @@ class Rectangle extends Figure {
     this.addPoint(topRight);
     this.addPoint(bottomRight);
     this.addPoint(bottomLeft);
-  }
-
-  draw(ctx) {
-    ctx.save();
-      ctx.translate(this.position().x, this.position().y);
-      ctx.rotate(this.rotation());
-      ctx.scale(this.scale().x, this.scale().y);
-      ctx.drawPolygon(
-        this.points(),
-        this.strokeColor(),
-        this.fillColor()
-      );
-    ctx.restore();
   }
 }
 
@@ -303,18 +340,5 @@ class Star extends Figure {
     const h = bottom - top;
 
     this.setSize(w, h);
-  }
-
-  draw(ctx) {
-    ctx.save();
-      ctx.translate(this.position().x, this.position().y);
-      ctx.rotate(this.rotation());
-      ctx.scale(this.scale().x, this.scale().y);
-      ctx.drawPolygon(
-        this.points(),
-        this.strokeColor(),
-        this.fillColor()
-      );
-    ctx.restore();
   }
 }
