@@ -18,6 +18,9 @@ rectangle2.setOffset(100, 100);
 rectangle4.setOffset(35, 35);
 
 let speedMultiplier = 1;
+let fps = 0;
+let fpsCounter = 0;
+let fpsTimer = 0;
 let lastTime = 0;
 let angle = 0;
 
@@ -35,6 +38,8 @@ function drawFrame(time, dt) {
   star1.draw(ctx);
 
   ctx.drawVector(vector1);
+
+  ctx.drawFPS(fps);
 
   rectangle1.setRotation(rectangle1.rotation() + dt * -0.025);
   rectangle2.setRotation(rectangle2.rotation() + dt * 0.035);
@@ -64,6 +69,15 @@ function animationLoop(time = 0) {
   const dt = time - lastTime;
 
   lastTime = time;
+
+  ++fpsCounter;
+  fpsTimer += dt;
+
+  if (fpsTimer >= 1000) {
+    fps = fpsCounter * 1000 / fpsTimer;
+    fpsCounter = 0;
+    fpsTimer = 0;
+  }
 
   drawFrame(time, dt);
 
@@ -95,5 +109,4 @@ transformationOrder.addEventListener('change', event => {
 
 // TODO
 // Add objects and draw them recursively
-// Add FPS
 // Fix the angle that increases with frames and don't follow speed modifier

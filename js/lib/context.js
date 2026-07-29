@@ -285,4 +285,11 @@ class Context {
     this.#ctx.fill();
     this.#ctx.stroke();
   }
+
+  drawFPS(fps) {
+    this.#ctx.font = 'bold 16px Arial';
+    this.#ctx.fillStyle = '#ffffff';
+
+    this.#ctx.fillText(`FPS: ${fps.toFixed(2)}`, 10, 20);
+  }
 }
