@@ -13,27 +13,27 @@ ctx.setOrigin(ctx.width() * 0.5, ctx.height() * 0.5);
 
 const vector1 = Matrix.newFromArray([[50], [100], [1]]);
 
-const rectangle1 = new Rectangle(0, 0, 50, 50, '#ffffff', '#ff0000');
+const rectangle1 = new Rectangle('Rectangle 1', 0, 0, 50, 50, '#ffffff', '#ff0000');
 
 ctx.addChild(rectangle1);
 
-const container1 = new Container(0, 0);
-const rectangle2 = new Rectangle(100, 100, 50, 50, '#ffffff', '#0000ff');
+const container1 = new Container('Container 1', 0, 0);
+const rectangle2 = new Rectangle('Rectangle 2', 100, 100, 50, 50, '#ffffff', '#0000ff');
 
 container1.addChild(rectangle2);
 ctx.addChild(container1);
 
-const rectangle3 = new Rectangle(200, 100, 15, 15, '#ffffff', '#ffff00');
+const rectangle3 = new Rectangle('Rectangle 3', 200, 100, 15, 15, '#ffffff', '#ffff00');
 
 ctx.addChild(rectangle3);
 
-const container2 = new Container(200, 100);
-const rectangle4 = new Rectangle(35, 35, 10, 10, '#ffffff', '#ff00ff');
+const container2 = new Container('Container 2', 200, 100);
+const rectangle4 = new Rectangle('Rectangle 4', 35, 35, 10, 10, '#ffffff', '#ff00ff');
 
 container2.addChild(rectangle4);
 ctx.addChild(container2);
 
-const star1 = new Star(200, -100, 5, 50, 25);
+const star1 = new Star('Star 1', 200, -100, 5, 50, 25);
 
 ctx.addChild(star1);
 
@@ -206,4 +206,3 @@ transformationOrder.addEventListener('change', event => {
 
 // TODO
 // Improve dump performance
-// Add names to objects

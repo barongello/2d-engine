@@ -16,6 +16,7 @@ class Context {
   #children = [];
   #logs = [];
   #logLevel = 0;
+  #scope = 'Root';
 
   #applyMatrices(matrices, vector) {
     let newVector = vector.clone();
@@ -91,6 +92,7 @@ class Context {
       reason,
       before,
       after,
+      scope: this.#scope,
       level: this.#logLevel
     };
 
@@ -236,8 +238,13 @@ class Context {
     return this;
   }
 
-  save() {
+  save(scope = 'Root') {
+    if (typeof scope !== 'string' || scope.length === 0) {
+      throw new Error('Invalid scope');
+    }
+
     const historyEntry = {
+      scope: this.#scope,
       base: this.#base.clone(),
       R: this.#R.clone(),
       S: this.#S.clone(),
@@ -245,6 +252,8 @@ class Context {
     };
 
     this.#transformationMatrixHistory.push(historyEntry);
+
+    this.#scope = scope;
 
     this.#base.copyFromMatrix(this.#transformationMatrix);
 
@@ -266,6 +275,7 @@ class Context {
 
     const historyEntry = this.#transformationMatrixHistory.pop();
 
+    this.#scope = historyEntry.scope;
     this.#base.copyFromMatrix(historyEntry.base);
     this.#R.copyFromMatrix(historyEntry.R);
     this.#S.copyFromMatrix(historyEntry.S);
@@ -337,7 +347,7 @@ class Context {
         }
 
         table += '<div class="content">'
-          table += `<div class="reason">${logEntry.reason}</div>`;
+          table += `<div class="reason">${logEntry.reason} (${logEntry.scope})</div>`;
           table += '<div class="header">Before</div>';
           table += '<div class="content-base content-before">';
             table += '<div class="matrix-dump">';
@@ -449,7 +459,7 @@ class Context {
   }
 
   drawVector(vector) {
-    this.save();
+    this.save('Vector');
       this.translate(this.#origin.x, this.#origin.y);
 
       const vectorOrigin = Matrix.newFromArray([[0], [0], [1]]);
@@ -492,7 +502,7 @@ class Context {
   }
 
   drawChildren() {
-    this.save();
+    this.save('Children');
       this.translate(this.#origin.x, this.#origin.y);
       this.rotate(this.#rotation);
       this.scale(this.#zoom.x, this.#zoom.y);

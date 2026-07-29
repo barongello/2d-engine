@@ -21,8 +21,10 @@ class BaseObject {
   #position = { x: 0, y: 0 };
   #rotation = 0;
   #scale = { x: 1, y: 1 };
+  #name = 'Object';
 
-  constructor(x, y) {
+  constructor(name, x, y) {
+    this.setName(name);
     this.setPosition(x, y);
   }
 
@@ -75,13 +77,25 @@ class BaseObject {
     this.#scale.x = x;
     this.#scale.y = y;
   }
+
+  name() {
+    return this.#name;
+  }
+
+  setName(name) {
+    if (typeof name !== 'string' || name.length === 0) {
+      throw new Error('Invalid name');
+    }
+
+    this.#name = name;
+  }
 }
 
 class Container extends BaseObject {
   #children = [];
 
-  constructor(x, y) {
-    super(x, y);
+  constructor(name, x, y) {
+    super(name, x, y);
   }
 
   children() {
@@ -103,7 +117,7 @@ class Container extends BaseObject {
       throw new Error('Invalid ctx');
     }
 
-    ctx.save();
+    ctx.save(this.name());
       ctx.translate(this.position().x, this.position().y);
       ctx.rotate(this.rotation());
       ctx.scale(this.scale().x, this.scale().y);
@@ -122,8 +136,8 @@ class Figure extends BaseObject {
   #fillColor = '#ff0000';
   #points = [];
 
-  constructor(x, y, strokeColor, fillColor) {
-    super(x, y);
+  constructor(name, x, y, strokeColor, fillColor) {
+    super(name, x, y);
 
     if (typeof strokeColor !== 'string') {
       throw new Error('Invalid stroke color');
@@ -234,7 +248,7 @@ class Figure extends BaseObject {
   }
 
   draw(ctx) {
-    ctx.save();
+    ctx.save(this.name());
       ctx.translate(this.position().x, this.position().y);
       ctx.rotate(this.rotation());
       ctx.scale(this.scale().x, this.scale().y);
@@ -249,8 +263,8 @@ class Figure extends BaseObject {
 }
 
 class Rectangle extends Figure {
-  constructor(x, y, w, h, strokeColor = '#ffffff', fillColor = '#ff0000') {
-    super(x, y, strokeColor, fillColor);
+  constructor(name, x, y, w, h, strokeColor = '#ffffff', fillColor = '#ff0000') {
+    super(name, x, y, strokeColor, fillColor);
 
     this.setSize(w, h);
 
@@ -268,8 +282,8 @@ class Rectangle extends Figure {
 }
 
 class Star extends Figure {
-  constructor(x, y, n, or, ir, strokeColor = '#00ffff', fillColor = '#ffff00') {
-    super(x, y, strokeColor, fillColor);
+  constructor(name, x, y, n, or, ir, strokeColor = '#00ffff', fillColor = '#ffff00') {
+    super(name, x, y, strokeColor, fillColor);
 
     if (isValidInteger(n) === false || n <= 0) {
       throw new Error('Invalid n');
