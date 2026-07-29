@@ -158,6 +158,8 @@ canvas.addEventListener('pointerup', event => {
 });
 
 canvas.addEventListener('wheel', event => {
+  event.preventDefault();
+
   let amount = 0;
 
   if (event.deltaY < 0) {
@@ -167,7 +169,27 @@ canvas.addEventListener('wheel', event => {
     amount = -ZOOM_STEP;
   }
 
-  ctx.setZoom(ctx.zoom().x + amount, ctx.zoom().y + amount);
+  if (amount === 0) {
+    return;
+  }
+
+  const oldZoom = ctx.zoom();
+  const newZoomX = oldZoom.x + amount;
+  const newZoomY = oldZoom.y + amount;
+
+  const mouseX = event.layerX;
+  const mouseY = event.layerY;
+
+  const oldOrigin = ctx.origin();
+
+  const newOriginX = mouseX - (mouseX - oldOrigin.x) * (newZoomX / oldZoom.x);
+  const newOriginY = mouseY - (mouseY - oldOrigin.y) * (newZoomY / oldZoom.y);
+
+  ctx.setZoom(newZoomX, newZoomY);
+  ctx.setOrigin(newOriginX, newOriginY);
+
+  vector1.set(0, 0, event.layerX - ctx.origin().x);
+  vector1.set(1, 0, event.layerY - ctx.origin().y);
 });
 
 animationSpeed.addEventListener('input', event => {
@@ -183,4 +205,4 @@ transformationOrder.addEventListener('change', event => {
 });
 
 // TODO
-// Store transformations log to show step by step
+// Improve dump performance

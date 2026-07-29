@@ -64,12 +64,37 @@ class Context {
     return newMatrix;
   }
 
-  #updateTransformationMatrix() {
+  #updateTransformationMatrix(reason = 'Unknown') {
+    const before = {
+      base: this.#base.dump(true),
+      R: this.#R.dump(true),
+      S: this.#S.dump(true),
+      T: this.#T.dump(true),
+      transformationMatrix: this.#transformationMatrix.dump(true)
+    };
+
     const newTransformationMatrix = this.#composeTransformationMatrix(this.#transformationMatrixOrder);
 
     this.#transformationMatrix.copyFromMatrix(
       Matrix.multiplyMatrices(this.#base, newTransformationMatrix)
     );
+
+    const after = {
+      base: this.#base.dump(true),
+      R: this.#R.dump(true),
+      S: this.#S.dump(true),
+      T: this.#T.dump(true),
+      transformationMatrix: this.#transformationMatrix.dump(true)
+    };
+
+    const logEntry = {
+      reason,
+      before,
+      after,
+      level: this.#logLevel
+    };
+
+    this.#logs.push(logEntry);
   }
 
   constructor(canvas, width, height) {
@@ -206,7 +231,7 @@ class Context {
         break;
     }
 
-    this.#updateTransformationMatrix();
+    this.#updateTransformationMatrix('Changing transformation matrix order');
 
     return this;
   }
@@ -227,13 +252,17 @@ class Context {
     this.#S.makeIdentity();
     this.#T.makeIdentity();
 
-    this.#updateTransformationMatrix();
+    this.#updateTransformationMatrix('Saving');
+
+    ++this.#logLevel;
   }
 
   restore() {
     if (this.#transformationMatrixHistory.length === 0) {
       return;
     }
+
+    --this.#logLevel;
 
     const historyEntry = this.#transformationMatrixHistory.pop();
 
@@ -242,14 +271,14 @@ class Context {
     this.#S.copyFromMatrix(historyEntry.S);
     this.#T.copyFromMatrix(historyEntry.T);
 
-    this.#updateTransformationMatrix();
+    this.#updateTransformationMatrix('Restoring');
   }
 
   scale(x = 1, y = 1) {
     this.#S.set(0, 0, this.#S.get(0, 0) * x);
     this.#S.set(1, 1, this.#S.get(1, 1) * y);
 
-    this.#updateTransformationMatrix();
+    this.#updateTransformationMatrix('Scaling');
   }
 
   rotate(deg = 0) {
@@ -266,14 +295,14 @@ class Context {
     this.#R.set(0, 1, -sin);
     this.#R.set(1, 0, sin);
 
-    this.#updateTransformationMatrix();
+    this.#updateTransformationMatrix('Rotating');
   }
 
   translate(x = 0, y = 0) {
     this.#T.set(0, 2, this.#T.get(0, 2) + x);
     this.#T.set(1, 2, this.#T.get(1, 2) + y);
 
-    this.#updateTransformationMatrix();
+    this.#updateTransformationMatrix('Translating');
   }
 
   children() {
@@ -291,11 +320,81 @@ class Context {
   }
 
   drawBegin() {
-    // TODO
+    this.#logs = [];
+    this.#logLevel = 0;
   }
 
   drawEnd() {
-    // TODO
+    const dump = document.getElementById('dump');
+
+    if (dump.innerHTML.length !== 0) {
+      return;
+    }
+    console.log(this.#logs)
+
+    let table = '';
+
+    for (const logEntry of this.#logs) {
+      table += '<div class="row">';
+
+        for (let i = 0; i < logEntry.level; ++i) {
+          table += '<div class="spacer"></div>'
+        }
+
+        table += '<div class="content">'
+          table += `<div class="reason">${logEntry.reason}</div>`;
+          table += '<div class="header">Before</div>';
+          table += '<div class="content-base content-before">';
+            table += '<div class="matrix-dump">';
+              table += '<div class="matrix-dump-header">Base</div>';
+              table += `<div class="matrix-dump-content"><pre>${logEntry.before.base}</pre></div>`;
+            table += '</div>';
+            table += '<div class="matrix-dump">';
+              table += '<div class="matrix-dump-header">R</div>';
+              table += `<div class="matrix-dump-content"><pre>${logEntry.before.R}</pre></div>`;
+            table += '</div>';
+            table += '<div class="matrix-dump">';
+              table += '<div class="matrix-dump-header">S</div>';
+              table += `<div class="matrix-dump-content"><pre>${logEntry.before.S}</pre></div>`;
+            table += '</div>';
+            table += '<div class="matrix-dump">';
+              table += '<div class="matrix-dump-header">T</div>';
+              table += `<div class="matrix-dump-content"><pre>${logEntry.before.T}</pre></div>`;
+            table += '</div>';
+            table += '<div class="matrix-dump">';
+              table += '<div class="matrix-dump-header">Transformation</div>';
+              table += `<div class="matrix-dump-content"><pre>${logEntry.before.transformationMatrix}</pre></div>`;
+            table += '</div>';
+          table += '</div>';
+
+          table += '<div class="header">After</div>';
+          table += '<div class="content-base content-after">';
+            table += '<div class="matrix-dump">';
+              table += '<div class="matrix-dump-header">Base</div>';
+              table += `<div class="matrix-dump-content"><pre>${logEntry.after.base}</pre></div>`;
+            table += '</div>';
+            table += '<div class="matrix-dump">';
+              table += '<div class="matrix-dump-header">R</div>';
+              table += `<div class="matrix-dump-content"><pre>${logEntry.after.R}</pre></div>`;
+            table += '</div>';
+            table += '<div class="matrix-dump">';
+              table += '<div class="matrix-dump-header">S</div>';
+              table += `<div class="matrix-dump-content"><pre>${logEntry.after.S}</pre></div>`;
+            table += '</div>';
+            table += '<div class="matrix-dump">';
+              table += '<div class="matrix-dump-header">T</div>';
+              table += `<div class="matrix-dump-content"><pre>${logEntry.after.T}</pre></div>`;
+            table += '</div>';
+            table += '<div class="matrix-dump">';
+              table += '<div class="matrix-dump-header">Transformation</div>';
+              table += `<div class="matrix-dump-content"><pre>${logEntry.after.transformationMatrix}</pre></div>`;
+            table += '</div>';
+          table += '</div>';
+        table += '</div>'
+      table += '</div>';
+    }
+
+    dump.innerHTML = table;
   }
 
   drawBackground() {

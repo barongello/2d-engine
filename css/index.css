@@ -2,6 +2,7 @@
   border: 0;
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 body {
@@ -23,4 +24,81 @@ canvas {
 #transformation-order {
   padding: 5px;
   margin-left: 5px;
+}
+
+#dump {
+  display: flex;
+  flex-direction: column;
+  margin: 10px;
+  border: 1px solid #eeeeee;
+  border-radius: 16px;
+  padding: 10px;
+  background: #313131;
+  row-gap: 10px;
+  overflow-x: scroll;
+
+  > .row {
+    display: flex;
+    flex-direction: row;
+
+    > .spacer {
+      display: inline;
+      width: 50px;
+      height: 100%;
+      flex-shrink: 0;
+    }
+
+    > .content {
+      display: flex;
+      flex-direction: column;
+      row-gap: 10px;
+      border: 1px solid #181818;
+      background-color: #404040;
+      padding: 10px;
+      border-radius: 8px;
+
+      > .reason {
+        color: #ffffff;
+        font-weight: bold;
+      }
+
+      > .header {
+        color: #aaaaaa;
+      }
+
+      > .content-base {
+        display: flex;
+        flex-direction: row;
+        border: 1px solid #282828;
+        background-color: #505050;
+        border-radius: 8px;
+        padding: 10px;
+        column-gap: 10px;
+
+        > .matrix-dump {
+          display: flex;
+          flex-direction: column;
+          border: 1px solid red;
+          border: 1px solid #383838;
+          background-color: #606060;
+          border-radius: 8px;
+          padding: 10px;
+
+          > .matrix-dump-header {
+            color: #cccccc;
+          }
+
+          > .matrix-dump-content {
+            color: #eeeeee;
+          }
+        }
+      }
+    }
+  }
+
+  .row::after {
+    content: '';
+    flex-shrink: 0;
+    width: 10px;
+  }
 }
