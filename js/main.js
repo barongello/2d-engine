@@ -1,13 +1,18 @@
+const CANVAS_WIDTH = 720;
+const CANVAS_HEIGHT = 405;
 const FRAME_TIME = 1000 / 60;
 const MAX_FRAME_TIME = 1000 / 30;
 const ZOOM_STEP = 0.1;
 
+const mainContainer = document.getElementById('main-container');
 const canvas = document.getElementById('canvas');
 const animationSpeed = document.getElementById('animation-speed');
 const animationSpeedValue = document.getElementById('animation-speed-value');
 const transformationOrder = document.getElementById('transformation-order');
 
-const ctx = new Context(canvas, 720, 405);
+mainContainer.style.width = `${CANVAS_WIDTH}px`;
+
+const ctx = new Context(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
 
 ctx.setOrigin(ctx.width() * 0.5, ctx.height() * 0.5);
 
