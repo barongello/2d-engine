@@ -58,7 +58,6 @@ function drawFrame(time, dt) {
   star1.setScale(scale, scale);
 
   angle += 0.1;
-  angle = time;
 }
 
 function animationLoop(time = 0) {
