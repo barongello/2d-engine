@@ -327,11 +327,6 @@ class Context {
   drawEnd() {
     const dump = document.getElementById('dump');
 
-    if (dump.innerHTML.length !== 0) {
-      return;
-    }
-    console.log(this.#logs)
-
     let table = '';
 
     for (const logEntry of this.#logs) {
