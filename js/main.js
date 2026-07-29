@@ -1,3 +1,6 @@
+const FRAME_TIME = 1000 / 60;
+const MAX_FRAME_TIME = 1000 / 30;
+
 const canvas = document.getElementById('canvas');
 const animationSpeed = document.getElementById('animation-speed');
 const animationSpeedValue = document.getElementById('animation-speed-value');
@@ -17,16 +20,48 @@ const star1 = new Star(200, -100, 5, 50, 25);
 rectangle2.setOffset(100, 100);
 rectangle4.setOffset(35, 35);
 
+const rectangle2BaseOffset = rectangle2.offset().x;
+const rectangle4BaseOffset = rectangle4.offset().x;
+
+const rectangle2Amplitude = rectangle2BaseOffset * 0.15;
+const rectangle4Amplitude = rectangle4BaseOffset / 7;
+
 let speedMultiplier = 1;
 let fps = 0;
 let fpsCounter = 0;
 let fpsTimer = 0;
-let lastTime = 0;
+let lastTime = null;
 let angle = 0;
 
-function drawFrame(time, dt) {
+function updateFrame(dt) {
+  dt = Math.min(dt, MAX_FRAME_TIME);
   dt *= speedMultiplier;
 
+  rectangle1.setRotation(rectangle1.rotation() + dt * -0.025);
+  rectangle2.setRotation(rectangle2.rotation() + dt * 0.035);
+  rectangle3.setRotation(rectangle3.rotation() + dt * 0.05);
+  rectangle4.setRotation(rectangle4.rotation() + dt * -0.075);
+
+  star1.setRotation(star1.rotation() + dt * -0.175);
+
+  rectangle2.setOffset(
+    rectangle2BaseOffset + Math.sin(angle) * rectangle2Amplitude,
+    rectangle2.offset().y
+  );
+
+  rectangle4.setOffset(
+    rectangle4BaseOffset + Math.sin(-angle) * 0.5 * rectangle4Amplitude,
+    rectangle4.offset().y
+  );
+
+  const scale = Math.sin(angle * 0.2);
+
+  star1.setScale(scale, scale);
+
+  angle += dt * (0.1 / FRAME_TIME);
+}
+
+function drawFrame(dt) {
   ctx.clearBackground();
   ctx.drawGrid();
 
@@ -40,32 +75,13 @@ function drawFrame(time, dt) {
   ctx.drawVector(vector1);
 
   ctx.drawFPS(fps);
-
-  rectangle1.setRotation(rectangle1.rotation() + dt * -0.025);
-  rectangle2.setRotation(rectangle2.rotation() + dt * 0.035);
-  rectangle3.setRotation(rectangle3.rotation() + dt * 0.05);
-  rectangle4.setRotation(rectangle4.rotation() + dt * -0.075);
-
-  star1.setRotation(star1.rotation() + dt * -0.175);
-
-  rectangle2.setOffset(
-    rectangle2.offset().x + Math.sin(angle),
-    rectangle2.offset().y
-  );
-
-  rectangle4.setOffset(
-    rectangle4.offset().x + Math.sin(-angle) * 0.5,
-    rectangle4.offset().y
-  );
-
-  const scale = Math.sin(angle * 0.2);
-
-  star1.setScale(scale, scale);
-
-  angle += 0.1;
 }
 
 function animationLoop(time = 0) {
+  if (lastTime === null) {
+    lastTime = time;
+  }
+
   const dt = time - lastTime;
 
   lastTime = time;
@@ -79,7 +95,8 @@ function animationLoop(time = 0) {
     fpsTimer = 0;
   }
 
-  drawFrame(time, dt);
+  updateFrame(dt);
+  drawFrame(dt);
 
   requestAnimationFrame(animationLoop);
 }
@@ -109,4 +126,4 @@ transformationOrder.addEventListener('change', event => {
 
 // TODO
 // Add objects and draw them recursively
-// Fix the angle that increases with frames and don't follow speed modifier
+// Store transformations log to show step by step
