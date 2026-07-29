@@ -7,8 +7,8 @@ class Context {
   #R = null;
   #S = null;
   #T = null;
-  #transformMatrix = null;
-  #transformMatrixHistory = [];
+  #transformationMatrix = null;
+  #transformationMatrixHistory = [];
 
   #applyMatrices(matrices, vector) {
     let newVector = vector.clone();
@@ -22,7 +22,7 @@ class Context {
     return newVector;
   }
 
-  #composeTransformMatrix(matrices) {
+  #composeTransformationMatrix(matrices) {
     if (matrices.length === 0) {
       return Matrix.newIdentity(3);
     }
@@ -66,6 +66,37 @@ class Context {
     return this.#applyMatrices([this.#S, this.#R, this.#T], vector);
   }
 
+  #getTransformationMatrix() {
+    const selectedOption = Number(document.getElementById('transformation-order').value);
+
+    let transformationMatrix = null;
+
+    switch (selectedOption) {
+      case 1:
+        transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#R, this.#S]); // Correct
+        break;
+      case 2:
+        transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#S, this.#R]); // Correct, but weird
+        break;
+      case 3:
+        transformationMatrix = this.#composeTransformationMatrix([this.#R, this.#T, this.#S]); // Wrong
+        break;
+      case 4:
+        transformationMatrix = this.#composeTransformationMatrix([this.#R, this.#S, this.#T]); // Wrong
+        break;
+      case 5:
+        transformationMatrix = this.#composeTransformationMatrix([this.#S, this.#T, this.#R]); // Correct, but weird
+        break;
+      case 6:
+        transformationMatrix = this.#composeTransformationMatrix([this.#S, this.#R, this.#T]); // Wrong
+        break;
+      default:
+        break;
+    }
+
+    return transformationMatrix;
+  }
+
   constructor(canvas, width, height) {
     if (canvas instanceof HTMLCanvasElement === false) {
       throw new Error('Invalid canvas');
@@ -97,7 +128,7 @@ class Context {
     this.#S = Matrix.newIdentity(3);
     this.#T = Matrix.newIdentity(3);
 
-    this.#transformMatrix = this.#composeTransformMatrix([this.#T, this.#R, this.#S]);
+    this.#transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#R, this.#S]);
 
     this.translate(this.#origin.x, this.#origin.y);
   }
@@ -107,30 +138,30 @@ class Context {
       R: this.#R.clone(),
       S: this.#S.clone(),
       T: this.#T.clone(),
-      transformMatrix: this.#transformMatrix.clone()
+      transformationMatrix: this.#transformationMatrix.clone()
     };
 
-    this.#transformMatrixHistory.push(historyEntry);
+    this.#transformationMatrixHistory.push(historyEntry);
   }
 
   restore() {
-    if (this.#transformMatrixHistory.length === 0) {
+    if (this.#transformationMatrixHistory.length === 0) {
       return;
     }
 
-    const historyEntry = this.#transformMatrixHistory.pop();
+    const historyEntry = this.#transformationMatrixHistory.pop();
 
     this.#R = historyEntry.R;
     this.#S = historyEntry.S;
     this.#T = historyEntry.T;
-    this.#transformMatrix = historyEntry.transformMatrix;
+    this.#transformationMatrix = historyEntry.transformationMatrix;
   }
 
   scale(x = 1, y = 1) {
     this.#S.set(0, 0, this.#S.get(0, 0) * x);
     this.#S.set(1, 1, this.#S.get(1, 1) * y);
 
-    this.#transformMatrix = this.#composeTransformMatrix([this.#T, this.#R, this.#S]);
+    this.#transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#R, this.#S]);
   }
 
   rotate(deg = 0) {
@@ -147,14 +178,14 @@ class Context {
     this.#R.set(0, 1, -sin);
     this.#R.set(1, 0, sin);
 
-    this.#transformMatrix = this.#composeTransformMatrix([this.#T, this.#R, this.#S]);
+    this.#transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#R, this.#S]);
   }
 
   translate(x = 0, y = 0) {
     this.#T.set(0, 2, this.#T.get(0, 2) + x);
     this.#T.set(1, 2, this.#T.get(1, 2) + y);
 
-    this.#transformMatrix = this.#composeTransformMatrix([this.#T, this.#R, this.#S]);
+    this.#transformationMatrix = this.#composeTransformationMatrix([this.#T, this.#R, this.#S]);
   }
 
   clearBackground() {
@@ -214,10 +245,12 @@ class Context {
   }
 
   drawVector(vector) {
+    const transformationMatrix = this.#getTransformationMatrix() ?? this.#transformationMatrix;
+
     const vectorOrigin = Matrix.newFromArray([[0], [0], [1]]);
 
-    const newVectorOrigin = this.#applyMatrices([this.#transformMatrix], vectorOrigin);
-    const newVector = this.#applyMatrices([this.#transformMatrix], vector);
+    const newVectorOrigin = this.#applyMatrices([transformationMatrix], vectorOrigin);
+    const newVector = this.#applyMatrices([transformationMatrix], vector);
 
     this.#ctx.strokeStyle = '#ffffff';
 
@@ -236,11 +269,11 @@ class Context {
       this.translate(vector.get(0, 0), vector.get(1, 0));
       this.rotate(45);
 
-      const newVectorTip1 = this.#applyMatrices([this.#transformMatrix], vectorTip);
+      const newVectorTip1 = this.#applyMatrices([transformationMatrix], vectorTip);
 
       this.rotate(-90);
 
-      const newVectorTip2 = this.#applyMatrices([this.#transformMatrix], vectorTip);
+      const newVectorTip2 = this.#applyMatrices([transformationMatrix], vectorTip);
     this.restore();
 
     this.#ctx.beginPath();
@@ -255,32 +288,7 @@ class Context {
   }
 
   drawPolygon(points, stroke = '#ffffff', fill = '#ff0000') {
-    const selectedOption = Number(document.getElementById('transformation-order').value);
-
-    let transformMatrix = null;
-
-    switch (selectedOption) {
-      case 1:
-        transformMatrix = this.#composeTransformMatrix([this.#T, this.#R, this.#S]); // Correct
-        break;
-      case 2:
-        transformMatrix = this.#composeTransformMatrix([this.#T, this.#S, this.#R]); // Correct, but weird
-        break;
-      case 3:
-        transformMatrix = this.#composeTransformMatrix([this.#R, this.#T, this.#S]); // Wrong
-        break;
-      case 4:
-        transformMatrix = this.#composeTransformMatrix([this.#R, this.#S, this.#T]); // Wrong
-        break;
-      case 5:
-        transformMatrix = this.#composeTransformMatrix([this.#S, this.#T, this.#R]); // Correct, but weird
-        break;
-      case 6:
-        transformMatrix = this.#composeTransformMatrix([this.#S, this.#R, this.#T]); // Wrong
-        break;
-      default:
-        break;
-    }
+    const transformationMatrix = this.#getTransformationMatrix() ?? this.#transformationMatrix;
 
     this.#ctx.strokeStyle = stroke;
     this.#ctx.fillStyle = fill;
@@ -288,7 +296,7 @@ class Context {
     this.#ctx.beginPath();
       for (let i = 0; i < points.length; ++i) {
         const point = points[i];
-        const newPoint = this.#applyMatrices([transformMatrix !== null ? transformMatrix : this.#transformMatrix], point);
+        const newPoint = this.#applyMatrices([transformationMatrix], point);
 
         if (i === 0) {
           this.#ctx.moveTo(newPoint.get(0, 0), newPoint.get(1, 0));
