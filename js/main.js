@@ -206,3 +206,4 @@ transformationOrder.addEventListener('change', event => {
 
 // TODO
 // Improve dump performance
+// Add names to objects
