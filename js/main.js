@@ -82,10 +82,13 @@ function updateFrame(dt) {
     rectangle4.position().y
   );
 
-  const scale = Math.sin(angle * 0.2);
+  const star1Scale = Math.sin(angle * 0.2);
 
-  star1.setScale(scale, scale);
-  rectangle5.setScale(scale * 2, scale);
+  star1.setScale(star1Scale, star1Scale);
+
+  const rectangle5Scale = Math.sin(angle * 0.35);
+
+  rectangle5.setScale(rectangle5Scale * 2, rectangle5Scale);
 
   angle += dt * (0.1 / FRAME_TIME);
 }
