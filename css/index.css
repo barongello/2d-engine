@@ -47,7 +47,6 @@ canvas {
 
     > .spacer {
       display: inline;
-      width: 50px;
       height: 100%;
       flex-shrink: 0;
     }

@@ -16,7 +16,30 @@ class Context {
   #children = [];
   #logs = [];
   #logLevel = 0;
+  #logCurrent = {};
   #scope = 'Root';
+
+  #addLogEntry(reason) {
+    this.#logCurrent.reason = reason;
+    this.#logCurrent.scope = this.#scope;
+    this.#logCurrent.level = this.#logLevel;
+
+    this.#logs.push(this.#logCurrent);
+
+    this.#logCurrent = {};
+  }
+
+  #updateLogEntry(key) {
+    const value = {
+      base: this.#base.dump(true),
+      R: this.#R.dump(true),
+      S: this.#S.dump(true),
+      T: this.#T.dump(true),
+      transformationMatrix: this.#transformationMatrix.dump(true)
+    };
+
+    this.#logCurrent[key] = value;
+  }
 
   #applyMatrices(matrices, vector) {
     let newVector = vector.clone();
@@ -65,38 +88,12 @@ class Context {
     return newMatrix;
   }
 
-  #updateTransformationMatrix(reason = 'Unknown') {
-    const before = {
-      base: this.#base.dump(true),
-      R: this.#R.dump(true),
-      S: this.#S.dump(true),
-      T: this.#T.dump(true),
-      transformationMatrix: this.#transformationMatrix.dump(true)
-    };
-
+  #updateTransformationMatrix() {
     const newTransformationMatrix = this.#composeTransformationMatrix(this.#transformationMatrixOrder);
 
     this.#transformationMatrix.copyFromMatrix(
       Matrix.multiplyMatrices(this.#base, newTransformationMatrix)
     );
-
-    const after = {
-      base: this.#base.dump(true),
-      R: this.#R.dump(true),
-      S: this.#S.dump(true),
-      T: this.#T.dump(true),
-      transformationMatrix: this.#transformationMatrix.dump(true)
-    };
-
-    const logEntry = {
-      reason,
-      before,
-      after,
-      scope: this.#scope,
-      level: this.#logLevel
-    };
-
-    this.#logs.push(logEntry);
   }
 
   constructor(canvas, width, height) {
@@ -233,16 +230,30 @@ class Context {
         break;
     }
 
-    this.#updateTransformationMatrix('Changing transformation matrix order');
+    this.#updateLogEntry('before');
+
+    this.#updateTransformationMatrix();
+
+    this.#updateLogEntry('after');
+
+    this.#addLogEntry('Changing transformation matrix order');
 
     return this;
   }
 
-  save(scope = 'Root') {
+  scope() {
+    return this.#scope;
+  }
+
+  setScope(scope) {
     if (typeof scope !== 'string' || scope.length === 0) {
       throw new Error('Invalid scope');
     }
 
+    this.#scope = scope;
+  }
+
+  save() {
     const historyEntry = {
       scope: this.#scope,
       base: this.#base.clone(),
@@ -253,15 +264,19 @@ class Context {
 
     this.#transformationMatrixHistory.push(historyEntry);
 
+    this.#updateLogEntry('before');
+
     this.#base.copyFromMatrix(this.#transformationMatrix);
 
     this.#R.makeIdentity();
     this.#S.makeIdentity();
     this.#T.makeIdentity();
 
-    this.#updateTransformationMatrix('Saving');
+    this.#updateTransformationMatrix();
 
-    this.#scope = scope;
+    this.#updateLogEntry('after');
+
+    this.#addLogEntry('Saving');
 
     ++this.#logLevel;
   }
@@ -276,22 +291,43 @@ class Context {
     const historyEntry = this.#transformationMatrixHistory.pop();
 
     this.#scope = historyEntry.scope;
+
+    this.#updateLogEntry('before');
+
     this.#base.copyFromMatrix(historyEntry.base);
     this.#R.copyFromMatrix(historyEntry.R);
     this.#S.copyFromMatrix(historyEntry.S);
     this.#T.copyFromMatrix(historyEntry.T);
 
-    this.#updateTransformationMatrix('Restoring');
+    this.#updateTransformationMatrix();
+
+    this.#updateLogEntry('after');
+
+    this.#addLogEntry('Restoring');
   }
 
   scale(x = 1, y = 1) {
+    if (x === 1 && y === 1) {
+      return;
+    }
+
+    this.#updateLogEntry('before');
+
     this.#S.set(0, 0, this.#S.get(0, 0) * x);
     this.#S.set(1, 1, this.#S.get(1, 1) * y);
 
-    this.#updateTransformationMatrix('Scaling');
+    this.#updateTransformationMatrix();
+
+    this.#updateLogEntry('after');
+
+    this.#addLogEntry('Scaling');
   }
 
   rotate(deg = 0) {
+    if ((deg % 360) === 0) {
+      return;
+    }
+
     const oldAngleRad = Math.acos(this.#R.get(0, 0));
     const rad = deg * Math.PI / 180;
     const newAngleRad = oldAngleRad + rad;
@@ -299,20 +335,36 @@ class Context {
     const cos = Math.cos(newAngleRad);
     const sin = Math.sin(newAngleRad);
 
+    this.#updateLogEntry('before');
+
     this.#R.set(0, 0, cos);
     this.#R.set(1, 1, cos);
 
     this.#R.set(0, 1, -sin);
     this.#R.set(1, 0, sin);
 
-    this.#updateTransformationMatrix('Rotating');
+    this.#updateTransformationMatrix();
+
+    this.#updateLogEntry('after');
+
+    this.#addLogEntry('Rotating');
   }
 
   translate(x = 0, y = 0) {
+    if (x === 0 && y === 0) {
+      return;
+    }
+
+    this.#updateLogEntry('before');
+
     this.#T.set(0, 2, this.#T.get(0, 2) + x);
     this.#T.set(1, 2, this.#T.get(1, 2) + y);
 
-    this.#updateTransformationMatrix('Translating');
+    this.#updateTransformationMatrix();
+
+    this.#updateLogEntry('after');
+
+    this.#addLogEntry('Translating');
   }
 
   children() {
@@ -341,10 +393,11 @@ class Context {
 
     for (const logEntry of this.#logs) {
       table += '<div class="row">';
-
-        for (let i = 0; i < logEntry.level; ++i) {
-          table += '<div class="spacer"></div>'
-        }
+        table += '<div class="spacer">';
+          for (let i = 0; i < logEntry.level; ++i) {
+            table += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+          }
+        table += '</div>';
 
         table += '<div class="content">'
           table += `<div class="reason">${logEntry.reason} (${logEntry.scope})</div>`;
@@ -459,7 +512,9 @@ class Context {
   }
 
   drawVector(vector) {
-    this.save('Vector');
+    this.save();
+      this.setScope('Vector');
+
       this.translate(this.#origin.x, this.#origin.y);
 
       const vectorOrigin = Matrix.newFromArray([[0], [0], [1]]);
@@ -502,7 +557,9 @@ class Context {
   }
 
   drawChildren() {
-    this.save('Children');
+    this.save();
+      this.setScope('Children');
+
       this.translate(this.#origin.x, this.#origin.y);
       this.rotate(this.#rotation);
       this.scale(this.#zoom.x, this.#zoom.y);
