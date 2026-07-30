@@ -38,9 +38,13 @@ const rectangle4 = new Rectangle('Rectangle 4', 35, 35, 10, 10, '#ffffff', '#ff0
 container2.addChild(rectangle4);
 ctx.addChild(container2);
 
-const star1 = new Star('Star 1', 200, -100, 5, 50, 25);
+const star1 = new Star('Star 1', 200, -100, 5, 50, 25, '#ffffff', '#00ff00');
 
 ctx.addChild(star1);
+
+const rectangle5 = new Rectangle('Rectangle 5', -200, 100, 50, 50, '#ffffff', '#000000');
+rectangle5.setScale(2, 1);
+ctx.addChild(rectangle5);
 
 const rectangle2BasePosition = rectangle2.position().x;
 const rectangle4BasePosition = rectangle4.position().x;
@@ -66,6 +70,8 @@ function updateFrame(dt) {
 
   star1.setRotation(star1.rotation() + dt * -0.175);
 
+  rectangle5.setRotation(rectangle5.rotation() + dt * 0.2);
+
   rectangle2.setPosition(
     rectangle2BasePosition + Math.sin(angle) * rectangle2Amplitude,
     rectangle2.position().y
@@ -79,6 +85,7 @@ function updateFrame(dt) {
   const scale = Math.sin(angle * 0.2);
 
   star1.setScale(scale, scale);
+  rectangle5.setScale(scale * 2, scale);
 
   angle += dt * (0.1 / FRAME_TIME);
 }

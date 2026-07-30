@@ -211,7 +211,7 @@ class Context {
   setTransformationMatrixOrder(option) {
     switch (option) {
       case 1:
-        this.#transformationMatrixOrder = ['T', 'S', 'R']; // Correct, but weird
+        this.#transformationMatrixOrder = ['T', 'S', 'R']; // Wrong
         break;
       case 2:
         this.#transformationMatrixOrder = ['R', 'T', 'S']; // Wrong
@@ -220,7 +220,7 @@ class Context {
         this.#transformationMatrixOrder = ['R', 'S', 'T']; // Wrong
         break;
       case 4:
-        this.#transformationMatrixOrder = ['S', 'T', 'R']; // Correct, but weird
+        this.#transformationMatrixOrder = ['S', 'T', 'R']; // Wrong
         break;
       case 5:
         this.#transformationMatrixOrder = ['S', 'R', 'T']; // Wrong
