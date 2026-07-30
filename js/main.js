@@ -150,8 +150,10 @@ canvas.addEventListener('pointermove', event => {
     pointerDown.y = event.layerY;
   }
 
-  vector1.set(0, 0, event.layerX - ctx.origin().x);
-  vector1.set(1, 0, event.layerY - ctx.origin().y);
+  const canvasBounding = canvas.getBoundingClientRect()
+
+  vector1.set(0, 0, event.clientX - canvasBounding.left - ctx.origin().x);
+  vector1.set(1, 0, event.clientY - canvasBounding.top - ctx.origin().y);
 });
 
 canvas.addEventListener('pointerup', event => {
@@ -193,8 +195,10 @@ canvas.addEventListener('wheel', event => {
   ctx.setZoom(newZoomX, newZoomY);
   ctx.setOrigin(newOriginX, newOriginY);
 
-  vector1.set(0, 0, event.layerX - ctx.origin().x);
-  vector1.set(1, 0, event.layerY - ctx.origin().y);
+  const canvasBounding = canvas.getBoundingClientRect();
+
+  vector1.set(0, 0, event.clientX - canvasBounding.left - ctx.origin().x);
+  vector1.set(1, 0, event.clientY - canvasBounding.top - ctx.origin().y);
 });
 
 animationSpeed.addEventListener('input', event => {
