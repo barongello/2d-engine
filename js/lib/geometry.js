@@ -117,9 +117,7 @@ class Container extends BaseObject {
       throw new Error('Invalid ctx');
     }
 
-    ctx.save();
-      ctx.setScope(this.name());
-
+    ctx.save(this.name());
       ctx.translate(this.position().x, this.position().y);
       ctx.rotate(this.rotation());
       ctx.scale(this.scale().x, this.scale().y);
@@ -250,9 +248,7 @@ class Figure extends BaseObject {
   }
 
   draw(ctx) {
-    ctx.save();
-      ctx.setScope(this.name());
-
+    ctx.save(this.name());
       ctx.translate(this.position().x, this.position().y);
       ctx.rotate(this.rotation());
       ctx.scale(this.scale().x, this.scale().y);

@@ -241,19 +241,7 @@ class Context {
     return this;
   }
 
-  scope() {
-    return this.#scope;
-  }
-
-  setScope(scope) {
-    if (typeof scope !== 'string' || scope.length === 0) {
-      throw new Error('Invalid scope');
-    }
-
-    this.#scope = scope;
-  }
-
-  save() {
+  save(scope = 'Unknown') {
     const historyEntry = {
       scope: this.#scope,
       base: this.#base.clone(),
@@ -263,6 +251,8 @@ class Context {
     };
 
     this.#transformationMatrixHistory.push(historyEntry);
+
+    this.#scope = `${this.#scope} -> ${scope}`;
 
     this.#updateLogEntry('before');
 
@@ -278,6 +268,8 @@ class Context {
 
     this.#addLogEntry('Saving');
 
+    this.#scope = scope;
+
     ++this.#logLevel;
   }
 
@@ -290,7 +282,7 @@ class Context {
 
     const historyEntry = this.#transformationMatrixHistory.pop();
 
-    this.#scope = historyEntry.scope;
+    this.#scope = `${this.#scope} -> ${historyEntry.scope}`;
 
     this.#updateLogEntry('before');
 
@@ -304,6 +296,8 @@ class Context {
     this.#updateLogEntry('after');
 
     this.#addLogEntry('Restoring');
+
+    this.#scope = historyEntry.scope;
   }
 
   scale(x = 1, y = 1) {
@@ -389,70 +383,110 @@ class Context {
   drawEnd() {
     const dump = document.getElementById('dump');
 
-    let table = '';
+    if (dump.childElementCount < this.#logs.length) {
+      let rows = '';
 
-    for (const logEntry of this.#logs) {
-      table += '<div class="row">';
-        table += '<div class="spacer">';
-          for (let i = 0; i < logEntry.level; ++i) {
-            table += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
-          }
-        table += '</div>';
+      for (let i = dump.childElementCount; i < this.#logs.length; ++i) {
+        rows += `<div class="row" id="dump-row-${i}">`;
+          rows += `<div class="spacer" id="dump-spacer-${i}"></div>`;
+          rows += `<div class="content">`;
+            rows += `<div class="reason" id="dump-reason-${i}"></div>`;
+            rows += '<div class="header">Before</div>';
+            rows += '<div class="content-base content-before">';
+              rows += '<div class="matrix-dump">';
+                rows += '<div class="matrix-dump-header">Base</div>';
+                rows += `<div class="matrix-dump-content"><pre id="dump-before-base-${i}"></pre></div>`;
+              rows += '</div>';
+              rows += '<div class="matrix-dump">';
+                rows += '<div class="matrix-dump-header">R</div>';
+                rows += `<div class="matrix-dump-content"><pre id="dump-before-r-${i}"></pre></div>`;
+              rows += '</div>';
+              rows += '<div class="matrix-dump">';
+                rows += '<div class="matrix-dump-header">S</div>';
+                rows += `<div class="matrix-dump-content"><pre id="dump-before-s-${i}"></pre></div>`;
+              rows += '</div>';
+              rows += '<div class="matrix-dump">';
+                rows += '<div class="matrix-dump-header">T</div>';
+                rows += `<div class="matrix-dump-content"><pre id="dump-before-t-${i}"></pre></div>`;
+              rows += '</div>';
+              rows += '<div class="matrix-dump">';
+                rows += '<div class="matrix-dump-header">Transformation</div>';
+                rows += `<div class="matrix-dump-content"><pre id="dump-before-transformation-${i}"></pre></div>`;
+              rows += '</div>';
+            rows += '</div>';
+            rows += '<div class="header">After</div>';
+            rows += '<div class="content-base content-after">';
+              rows += '<div class="matrix-dump">';
+                rows += '<div class="matrix-dump-header">Base</div>';
+                rows += `<div class="matrix-dump-content"><pre id="dump-after-base-${i}"></pre></div>`;
+              rows += '</div>';
+              rows += '<div class="matrix-dump">';
+                rows += '<div class="matrix-dump-header">R</div>';
+                rows += `<div class="matrix-dump-content"><pre id="dump-after-r-${i}"></pre></div>`;
+              rows += '</div>';
+              rows += '<div class="matrix-dump">';
+                rows += '<div class="matrix-dump-header">S</div>';
+                rows += `<div class="matrix-dump-content"><pre id="dump-after-s-${i}"></pre></div>`;
+              rows += '</div>';
+              rows += '<div class="matrix-dump">';
+                rows += '<div class="matrix-dump-header">T</div>';
+                rows += `<div class="matrix-dump-content"><pre id="dump-after-t-${i}"></pre></div>`;
+              rows += '</div>';
+              rows += '<div class="matrix-dump">';
+                rows += '<div class="matrix-dump-header">Transformation</div>';
+                rows += `<div class="matrix-dump-content"><pre id="dump-after-transformation-${i}"></pre></div>`;
+              rows += '</div>';
+            rows += '</div>';
+          rows += '</div>'
+        rows += '</div>';
+      }
 
-        table += '<div class="content">'
-          table += `<div class="reason">${logEntry.reason} (${logEntry.scope})</div>`;
-          table += '<div class="header">Before</div>';
-          table += '<div class="content-base content-before">';
-            table += '<div class="matrix-dump">';
-              table += '<div class="matrix-dump-header">Base</div>';
-              table += `<div class="matrix-dump-content"><pre>${logEntry.before.base}</pre></div>`;
-            table += '</div>';
-            table += '<div class="matrix-dump">';
-              table += '<div class="matrix-dump-header">R</div>';
-              table += `<div class="matrix-dump-content"><pre>${logEntry.before.R}</pre></div>`;
-            table += '</div>';
-            table += '<div class="matrix-dump">';
-              table += '<div class="matrix-dump-header">S</div>';
-              table += `<div class="matrix-dump-content"><pre>${logEntry.before.S}</pre></div>`;
-            table += '</div>';
-            table += '<div class="matrix-dump">';
-              table += '<div class="matrix-dump-header">T</div>';
-              table += `<div class="matrix-dump-content"><pre>${logEntry.before.T}</pre></div>`;
-            table += '</div>';
-            table += '<div class="matrix-dump">';
-              table += '<div class="matrix-dump-header">Transformation</div>';
-              table += `<div class="matrix-dump-content"><pre>${logEntry.before.transformationMatrix}</pre></div>`;
-            table += '</div>';
-          table += '</div>';
-
-          table += '<div class="header">After</div>';
-          table += '<div class="content-base content-after">';
-            table += '<div class="matrix-dump">';
-              table += '<div class="matrix-dump-header">Base</div>';
-              table += `<div class="matrix-dump-content"><pre>${logEntry.after.base}</pre></div>`;
-            table += '</div>';
-            table += '<div class="matrix-dump">';
-              table += '<div class="matrix-dump-header">R</div>';
-              table += `<div class="matrix-dump-content"><pre>${logEntry.after.R}</pre></div>`;
-            table += '</div>';
-            table += '<div class="matrix-dump">';
-              table += '<div class="matrix-dump-header">S</div>';
-              table += `<div class="matrix-dump-content"><pre>${logEntry.after.S}</pre></div>`;
-            table += '</div>';
-            table += '<div class="matrix-dump">';
-              table += '<div class="matrix-dump-header">T</div>';
-              table += `<div class="matrix-dump-content"><pre>${logEntry.after.T}</pre></div>`;
-            table += '</div>';
-            table += '<div class="matrix-dump">';
-              table += '<div class="matrix-dump-header">Transformation</div>';
-              table += `<div class="matrix-dump-content"><pre>${logEntry.after.transformationMatrix}</pre></div>`;
-            table += '</div>';
-          table += '</div>';
-        table += '</div>'
-      table += '</div>';
+      dump.innerHTML += rows;
+    }
+    else if (dump.childElementCount > this.#logs.length) {
+      while (dump.childElementCount > this.#logs.length) {
+        dump.removeChild(dump.children[dump.childElementCount - 1]);
+      }
     }
 
-    dump.innerHTML = table;
+    for (let i = 0; i < this.#logs.length; ++i) {
+      const logEntry = this.#logs[i];
+
+      const spacer = document.getElementById(`dump-spacer-${i}`);
+      const reason = document.getElementById(`dump-reason-${i}`);
+      const beforeBase = document.getElementById(`dump-before-base-${i}`);
+      const beforeR = document.getElementById(`dump-before-r-${i}`);
+      const beforeS = document.getElementById(`dump-before-s-${i}`);
+      const beforeT = document.getElementById(`dump-before-t-${i}`);
+      const beforeTransformation = document.getElementById(`dump-before-transformation-${i}`);
+      const afterBase = document.getElementById(`dump-after-base-${i}`);
+      const afterR = document.getElementById(`dump-after-r-${i}`);
+      const afterS = document.getElementById(`dump-after-s-${i}`);
+      const afterT = document.getElementById(`dump-after-t-${i}`);
+      const afterTransformation = document.getElementById(`dump-after-transformation-${i}`);
+
+      let spacerContent = '';
+
+      for (let j = 0; j < logEntry.level; ++j) {
+        spacerContent += '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+      }
+
+      spacer.innerHTML = spacerContent;
+
+      reason.innerHTML = `${logEntry.reason} (${logEntry.scope})`;
+
+      beforeBase.innerHTML = logEntry.before.base;
+      beforeR.innerHTML = logEntry.before.R;
+      beforeS.innerHTML = logEntry.before.S;
+      beforeT.innerHTML = logEntry.before.T;
+      beforeTransformation.innerHTML = logEntry.before.transformationMatrix;
+
+      afterBase.innerHTML = logEntry.after.base;
+      afterR.innerHTML = logEntry.after.R;
+      afterS.innerHTML = logEntry.after.S;
+      afterT.innerHTML = logEntry.after.T;
+      afterTransformation.innerHTML = logEntry.after.transformationMatrix;
+    }
   }
 
   drawBackground() {
@@ -512,9 +546,7 @@ class Context {
   }
 
   drawVector(vector) {
-    this.save();
-      this.setScope('Vector');
-
+    this.save('Vector');
       this.translate(this.#origin.x, this.#origin.y);
 
       const vectorOrigin = Matrix.newFromArray([[0], [0], [1]]);
@@ -557,9 +589,7 @@ class Context {
   }
 
   drawChildren() {
-    this.save();
-      this.setScope('Children');
-
+    this.save('Children');
       this.translate(this.#origin.x, this.#origin.y);
       this.rotate(this.#rotation);
       this.scale(this.#zoom.x, this.#zoom.y);
