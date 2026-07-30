@@ -212,6 +212,3 @@ transformationOrder.addEventListener('change', event => {
 
   ctx.setTransformationMatrixOrder(option);
 });
-
-// TODO
-// Improve dump performance
