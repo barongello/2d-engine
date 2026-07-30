@@ -144,9 +144,14 @@ canvas.addEventListener('pointerdown', event => {
 });
 
 canvas.addEventListener('pointermove', event => {
+  const canvasBounding = canvas.getBoundingClientRect();
+
+  const scaleX = canvas.width / canvasBounding.width;
+  const scaleY = canvas.height / canvasBounding.height;
+
   if (pointerDown !== null) {
-    const dx = event.layerX - pointerDown.x;
-    const dy = event.layerY - pointerDown.y;
+    const dx = (event.layerX - pointerDown.x) * scaleX;
+    const dy = (event.layerY - pointerDown.y) * scaleY;
 
     ctx.setOrigin(
       ctx.origin().x + dx,
@@ -157,10 +162,8 @@ canvas.addEventListener('pointermove', event => {
     pointerDown.y = event.layerY;
   }
 
-  const canvasBounding = canvas.getBoundingClientRect()
-
-  vector1.set(0, 0, event.clientX - canvasBounding.left - ctx.origin().x);
-  vector1.set(1, 0, event.clientY - canvasBounding.top - ctx.origin().y);
+  vector1.set(0, 0, (event.clientX - canvasBounding.left) * scaleX - ctx.origin().x);
+  vector1.set(1, 0, (event.clientY - canvasBounding.top) * scaleY - ctx.origin().y);
 });
 
 canvas.addEventListener('pointerup', event => {
@@ -204,8 +207,11 @@ canvas.addEventListener('wheel', event => {
 
   const canvasBounding = canvas.getBoundingClientRect();
 
-  vector1.set(0, 0, event.clientX - canvasBounding.left - ctx.origin().x);
-  vector1.set(1, 0, event.clientY - canvasBounding.top - ctx.origin().y);
+  const scaleX = canvas.width / canvasBounding.width;
+  const scaleY = canvas.height / canvasBounding.height;
+
+  vector1.set(0, 0, (event.clientX - canvasBounding.left) * scaleX - ctx.origin().x);
+  vector1.set(1, 0, (event.clientY - canvasBounding.top) * scaleY - ctx.origin().y);
 });
 
 animationSpeed.addEventListener('input', event => {

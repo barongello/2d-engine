@@ -5,6 +5,11 @@
   box-sizing: border-box;
 }
 
+html, body {
+  max-width: 100dvw;
+  overflow-x: hidden;
+}
+
 body {
   background-color: #181818;
   color: #ffffff;
@@ -12,9 +17,13 @@ body {
 
 #main-container {
   margin: auto;
+  max-width: 100dvw;
+  width: 100%;
 }
 
 canvas {
+  max-width: 100%;
+  height: auto;
   image-rendering: -moz-crisp-edges;
   image-rendering: -webkit-optimize-contrast;
   image-rendering: pixelated;
