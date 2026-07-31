@@ -147,7 +147,21 @@ function getCanvasScale() {
   };
 }
 
-function computeGesture(points) {
+function getEventSamples(event) {
+  if (typeof event.getCoalescedEvents === 'function') {
+    const coalesced = event.getCoalescedEvents();
+
+    if (coalesced.length > 0) {
+      return coalesced;
+    }
+  }
+
+  return [event];
+}
+
+function computeGesture(pointsMap) {
+  const entries = [...pointsMap.entries()].sort((a, b) => a[0] - b[0]);
+  const points = entries.map(e => e[1]);
   const n = points.length;
 
   let cx = 0;
@@ -162,24 +176,20 @@ function computeGesture(points) {
   cy /= n;
 
   let spread = 0;
-  let sumCos = 0;
-  let sumSin = 0;
 
   for (const p of points) {
-    const vx = p.x - cx;
-    const vy = p.y - cy;
-
-    spread += Math.hypot(vx, vy);
-
-    const pointAngle = Math.atan2(vy, vx);
-
-    sumCos += Math.cos(pointAngle);
-    sumSin += Math.sin(pointAngle);
+    spread += Math.hypot(p.x - cx, p.y - cy);
   }
 
   spread /= n;
 
-  const angle = Math.atan2(sumSin, sumCos);
+  let angle = 0;
+
+  if (n >= 2) {
+    const [p0, p1] = points;
+
+    angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+  }
 
   return { cx, cy, spread, angle };
 }
@@ -243,65 +253,56 @@ canvas.addEventListener('pointerdown', event => {
 
   activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
-  currentGesture = computeGesture([...activePointers.values()]);
+  currentGesture = computeGesture(activePointers);
 });
 
-canvas.addEventListener('pointermove', event => {
-  const { scaleX, scaleY, bounding } = getCanvasScale();
+function handleRotateSample(sample, scaleX, scaleY, bounding) {
+  const mouseX = (sample.clientX - bounding.left) * scaleX;
+  const mouseY = (sample.clientY - bounding.top) * scaleY;
 
-  const isRightMouseDrag = event.pointerType === 'mouse'
-    && mouseRotate !== null
-    && event.pointerId === mouseRotate.pointerId
-    && (event.buttons & 2) !== 0;
+  const vx = mouseX - mouseRotate.pivotX;
+  const vy = mouseY - mouseRotate.pivotY;
 
-  if (isRightMouseDrag === true) {
-    const mouseX = (event.clientX - bounding.left) * scaleX;
-    const mouseY = (event.clientY - bounding.top) * scaleY;
+  if (Math.hypot(vx, vy) > 1) {
+    const angle = Math.atan2(vy, vx);
 
-    const vx = mouseX - mouseRotate.pivotX;
-    const vy = mouseY - mouseRotate.pivotY;
+    if (mouseRotate.lastAngle !== null) {
+      const deltaRad = normalizeAngleDelta(angle - mouseRotate.lastAngle);
+      const newRotation = ctx.rotation() + deltaRad * 180 / Math.PI;
 
-    if (Math.hypot(vx, vy) > 1) {
-      const angle = Math.atan2(vy, vx);
+      const newOrigin = computeAnchoredOrigin(
+        { x: mouseRotate.pivotX, y: mouseRotate.pivotY },
+        ctx.origin(),
+        ctx.zoom(),
+        ctx.rotation(),
+        ctx.zoom(),
+        newRotation
+      );
 
-      if (mouseRotate.lastAngle !== null) {
-        const deltaRad = normalizeAngleDelta(angle - mouseRotate.lastAngle);
-        const newRotation = ctx.rotation() + deltaRad * 180 / Math.PI;
-
-        const newOrigin = computeAnchoredOrigin(
-          { x: mouseRotate.pivotX, y: mouseRotate.pivotY },
-          ctx.origin(),
-          ctx.zoom(),
-          ctx.rotation(),
-          ctx.zoom(),
-          newRotation
-        );
-
-        ctx.setRotation(newRotation);
-        ctx.setOrigin(newOrigin.x, newOrigin.y);
-      }
-
-      mouseRotate.lastAngle = angle;
+      ctx.setRotation(newRotation);
+      ctx.setOrigin(newOrigin.x, newOrigin.y);
     }
 
-    vector1.set(0, 0, mouseX - ctx.origin().x);
-    vector1.set(1, 0, mouseY - ctx.origin().y);
-
-    return;
+    mouseRotate.lastAngle = angle;
   }
 
-  let referenceX = event.clientX;
-  let referenceY = event.clientY;
+  vector1.set(0, 0, mouseX - ctx.origin().x);
+  vector1.set(1, 0, mouseY - ctx.origin().y);
+}
 
-  if (activePointers.has(event.pointerId) === true) {
-    activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+function handleGestureSample(sample, scaleX, scaleY, bounding) {
+  let referenceX = sample.clientX;
+  let referenceY = sample.clientY;
+
+  if (activePointers.has(sample.pointerId) === true) {
+    activePointers.set(sample.pointerId, { x: sample.clientX, y: sample.clientY });
   }
 
-  const isMouseDrag = event.pointerType === 'mouse' && activePointers.has(event.pointerId);
+  const isMouseDrag = sample.pointerType === 'mouse' && activePointers.has(sample.pointerId);
   const isMultiTouch = activePointers.size >= 2;
 
   if (isMouseDrag === true || isMultiTouch === true) {
-    const current = computeGesture([...activePointers.values()]);
+    const current = computeGesture(activePointers);
 
     if (currentGesture !== null) {
       const dx = (current.cx - currentGesture.cx) * scaleX;
@@ -354,6 +355,25 @@ canvas.addEventListener('pointermove', event => {
 
   vector1.set(0, 0, (referenceX - bounding.left) * scaleX - ctx.origin().x);
   vector1.set(1, 0, (referenceY - bounding.top) * scaleY - ctx.origin().y);
+}
+
+canvas.addEventListener('pointermove', event => {
+  const { scaleX, scaleY, bounding } = getCanvasScale();
+  const samples = getEventSamples(event);
+
+  const isRightMouseDrag = event.pointerType === 'mouse'
+    && mouseRotate !== null
+    && event.pointerId === mouseRotate.pointerId
+    && (event.buttons & 2) !== 0;
+
+  for (const sample of samples) {
+    if (isRightMouseDrag === true) {
+      handleRotateSample(sample, scaleX, scaleY, bounding);
+    }
+    else {
+      handleGestureSample(sample, scaleX, scaleY, bounding);
+    }
+  }
 });
 
 function releasePointer(event) {
@@ -368,11 +388,12 @@ function releasePointer(event) {
   activePointers.delete(event.pointerId);
 
   currentGesture = activePointers.size > 0
-    ? computeGesture([...activePointers.values()])
+    ? computeGesture(activePointers)
     : null;
 }
 
 canvas.addEventListener('pointerup', releasePointer);
+
 canvas.addEventListener('pointercancel', releasePointer);
 
 canvas.addEventListener('wheel', event => {
