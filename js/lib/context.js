@@ -500,49 +500,66 @@ class Context {
       step = 50;
     }
 
-    let x = this.#origin.x + (this.#origin.x % 1 === 0 ? 0.5 : 0);
-    let y = this.#origin.y + (this.#origin.y % 1 === 0 ? 0.5 : 0);
+    const zoom = this.#zoom;
+    const minZoom = Math.max(Math.min(Math.abs(zoom.x), Math.abs(zoom.y)), 0.001);
+
+    const cornerDistances = [
+      Math.hypot(this.#origin.x, this.#origin.y),
+      Math.hypot(this.#width - this.#origin.x, this.#origin.y),
+      Math.hypot(this.#origin.x, this.#height - this.#origin.y),
+      Math.hypot(this.#width - this.#origin.x, this.#height - this.#origin.y)
+    ];
+
+    const maxScreenDistance = Math.max(...cornerDistances);
+
+    const extent = Math.ceil((maxScreenDistance / minZoom) / step) * step + step;
 
     this.#ctx.lineWidth = 1;
     this.#ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
 
-    while ((x - step) > 0) {
-      x -= step;
-    }
+    this.save('Grid');
+      this.translate(this.#origin.x, this.#origin.y);
+      this.rotate(this.#rotation);
+      this.scale(zoom.x, zoom.y);
 
-    while ((y - step) > 0) {
-      y -= step;
-    }
+      for (let x = -extent; x <= extent; x += step) {
+        const p1 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[x], [-extent], [1]]));
+        const p2 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[x], [extent], [1]]));
 
-    while (x <= canvas.width) {
+        this.#ctx.beginPath();
+          this.#ctx.moveTo(p1.get(0, 0), p1.get(1, 0));
+          this.#ctx.lineTo(p2.get(0, 0), p2.get(1, 0));
+        this.#ctx.stroke();
+      }
+
+      for (let y = -extent; y <= extent; y += step) {
+        const p1 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[-extent], [y], [1]]));
+        const p2 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[extent], [y], [1]]));
+
+        this.#ctx.beginPath();
+          this.#ctx.moveTo(p1.get(0, 0), p1.get(1, 0));
+          this.#ctx.lineTo(p2.get(0, 0), p2.get(1, 0));
+        this.#ctx.stroke();
+      }
+
+      this.#ctx.lineWidth = 2;
+
+      const axisX1 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[0], [-extent], [1]]));
+      const axisX2 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[0], [extent], [1]]));
+
       this.#ctx.beginPath();
-        this.#ctx.moveTo(x, 0);
-        this.#ctx.lineTo(x, canvas.height - 1);
+        this.#ctx.moveTo(axisX1.get(0, 0), axisX1.get(1, 0));
+        this.#ctx.lineTo(axisX2.get(0, 0), axisX2.get(1, 0));
       this.#ctx.stroke();
 
-      x += step;
-    }
+      const axisY1 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[-extent], [0], [1]]));
+      const axisY2 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[extent], [0], [1]]));
 
-    while (y <= canvas.height) {
       this.#ctx.beginPath();
-        this.#ctx.moveTo(0, y);
-        this.#ctx.lineTo(canvas.width - 1, y);
+        this.#ctx.moveTo(axisY1.get(0, 0), axisY1.get(1, 0));
+        this.#ctx.lineTo(axisY2.get(0, 0), axisY2.get(1, 0));
       this.#ctx.stroke();
-
-      y += step;
-    }
-
-    this.#ctx.lineWidth = 2;
-
-    this.#ctx.beginPath();
-      this.#ctx.moveTo(this.#origin.x, 0);
-      this.#ctx.lineTo(this.#origin.x, canvas.height - 1);
-    this.#ctx.stroke();
-
-    this.#ctx.beginPath();
-      this.#ctx.moveTo(0, this.#origin.y);
-      this.#ctx.lineTo(canvas.width - 1, this.#origin.y);
-    this.#ctx.stroke();
+    this.restore();
   }
 
   drawVector(vector) {
