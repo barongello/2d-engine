@@ -99,7 +99,7 @@ function drawFrame() {
     ctx.drawGrid();
     ctx.drawChildren();
     ctx.drawVector(vector1);
-    ctx.drawFPS(fps);
+    ctx.drawInfo(fps);
   ctx.drawEnd();
 }
 

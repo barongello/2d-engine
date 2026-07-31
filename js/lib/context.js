@@ -820,10 +820,13 @@ class Context {
     this.#ctx.stroke();
   }
 
-  drawFPS(fps) {
+  drawInfo(fps) {
     this.#ctx.font = 'bold 16px Arial';
     this.#ctx.fillStyle = '#ffffff';
 
     this.#ctx.fillText(`FPS: ${fps.toFixed(2)}`, 10, 20);
+    this.#ctx.fillText(`Origin: (${this.#origin.x.toFixed(2)}, ${this.#origin.y.toFixed(2)})`, 10, 36);
+    this.#ctx.fillText(`Rotation: ${this.#rotation.toFixed(2)}`, 10, 52);
+    this.#ctx.fillText(`Zoom: (${this.#zoom.x.toFixed(2)}, ${this.#zoom.y.toFixed(2)})`, 10, 68);
   }
 }
