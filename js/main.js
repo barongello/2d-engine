@@ -267,12 +267,14 @@ canvas.addEventListener('wheel', event => {
     return;
   }
 
+  const { scaleX, scaleY, bounding } = getCanvasScale();
+
+  const mouseX = (event.clientX - bounding.left) * scaleX;
+  const mouseY = (event.clientY - bounding.top) * scaleY;
+
   const oldZoom = ctx.zoom();
   const newZoomX = oldZoom.x + amount;
   const newZoomY = oldZoom.y + amount;
-
-  const mouseX = event.layerX;
-  const mouseY = event.layerY;
 
   const oldOrigin = ctx.origin();
 
@@ -282,13 +284,8 @@ canvas.addEventListener('wheel', event => {
   ctx.setZoom(newZoomX, newZoomY);
   ctx.setOrigin(newOriginX, newOriginY);
 
-  const canvasBounding = canvas.getBoundingClientRect();
-
-  const scaleX = canvas.width / canvasBounding.width;
-  const scaleY = canvas.height / canvasBounding.height;
-
-  vector1.set(0, 0, (event.clientX - canvasBounding.left) * scaleX - ctx.origin().x);
-  vector1.set(1, 0, (event.clientY - canvasBounding.top) * scaleY - ctx.origin().y);
+  vector1.set(0, 0, mouseX - ctx.origin().x);
+  vector1.set(1, 0, mouseY - ctx.origin().y);
 });
 
 animationSpeed.addEventListener('input', event => {
