@@ -97,6 +97,45 @@ class Context {
     );
   }
 
+  #intersectRayRect(ox, oy, dx, dy, minX, minY, maxX, maxY) {
+    const EPS = 1e-6;
+    let bestT = Infinity;
+
+    if (dx !== 0) {
+      for (const boundX of [minX, maxX]) {
+        const t = (boundX - ox) / dx;
+
+        if (t > EPS) {
+          const y = oy + t * dy;
+
+          if (y >= minY - EPS && y <= maxY + EPS) {
+            bestT = Math.min(bestT, t);
+          }
+        }
+      }
+    }
+
+    if (dy !== 0) {
+      for (const boundY of [minY, maxY]) {
+        const t = (boundY - oy) / dy;
+
+        if (t > EPS) {
+          const x = ox + t * dx;
+
+          if (x >= minX - EPS && x <= maxX + EPS) {
+            bestT = Math.min(bestT, t);
+          }
+        }
+      }
+    }
+
+    if (Number.isFinite(bestT) === false) {
+      return null;
+    }
+
+    return { x: ox + bestT * dx, y: oy + bestT * dy };
+  }
+
   #computeGridLines(step) {
     const zoom = this.#zoom;
     const minZoom = Math.max(Math.min(Math.abs(zoom.x), Math.abs(zoom.y)), 0.001);
@@ -142,24 +181,124 @@ class Context {
         });
       }
 
-      const axisX1 = transform(Matrix.newFromArray([[0], [-extent], [1]]));
-      const axisX2 = transform(Matrix.newFromArray([[0], [extent], [1]]));
+      const originScreen = transform(Matrix.newFromArray([[0], [0], [1]]));
 
-      const axisX = {
-        x1: axisX1.get(0, 0), y1: axisX1.get(1, 0),
-        x2: axisX2.get(0, 0), y2: axisX2.get(1, 0)
+      const rectBounds = {
+        minX: 0,
+        minY: 0,
+        maxX: this.#width,
+        maxY: this.#height
       };
 
-      const axisY1 = transform(Matrix.newFromArray([[-extent], [0], [1]]));
-      const axisY2 = transform(Matrix.newFromArray([[extent], [0], [1]]));
+      const rotRad = this.#rotation * Math.PI / 180;
 
-      const axisY = {
-        x1: axisY1.get(0, 0), y1: axisY1.get(1, 0),
-        x2: axisY2.get(0, 0), y2: axisY2.get(1, 0)
+      const xAxisBase = transform(Matrix.newFromArray([[-extent], [0], [1]]));
+      const xAxisFar = transform(Matrix.newFromArray([[extent], [0], [1]]));
+
+      const xDirX = Math.cos(rotRad);
+      const xDirY = Math.sin(rotRad);
+
+      const xArrowTip = this.#intersectRayRect(
+        originScreen.get(0, 0), originScreen.get(1, 0),
+        xDirX, xDirY,
+        rectBounds.minX, rectBounds.minY, rectBounds.maxX, rectBounds.maxY
+      );
+
+      const xAxis = {
+        x1: xAxisBase.get(0, 0), y1: xAxisBase.get(1, 0),
+        x2: xAxisFar.get(0, 0), y2: xAxisFar.get(1, 0),
+        arrowTip: xArrowTip,
+        dirX: xDirX, dirY: xDirY,
+        color: '#ff5555',
+        label: 'X'
+      };
+
+      const yAxisBase = transform(Matrix.newFromArray([[0], [-extent], [1]]));
+      const yAxisFar = transform(Matrix.newFromArray([[0], [extent], [1]]));
+
+      const yDirX = -Math.sin(rotRad);
+      const yDirY = Math.cos(rotRad);
+
+      const yArrowTip = this.#intersectRayRect(
+        originScreen.get(0, 0), originScreen.get(1, 0),
+        yDirX, yDirY,
+        rectBounds.minX, rectBounds.minY, rectBounds.maxX, rectBounds.maxY
+      );
+
+      const yAxis = {
+        x1: yAxisBase.get(0, 0), y1: yAxisBase.get(1, 0),
+        x2: yAxisFar.get(0, 0), y2: yAxisFar.get(1, 0),
+        arrowTip: yArrowTip,
+        dirX: yDirX, dirY: yDirY,
+        color: '#55ff55',
+        label: 'Y'
       };
     this.restore();
 
-    return { verticalLines, horizontalLines, axisX, axisY };
+    return { verticalLines, horizontalLines, xAxis, yAxis };
+  }
+
+  #drawAxis(axis, rotateSign) {
+    this.#ctx.strokeStyle = axis.color;
+
+    this.#ctx.beginPath();
+      this.#ctx.moveTo(axis.x1, axis.y1);
+      this.#ctx.lineTo(axis.x2, axis.y2);
+    this.#ctx.stroke();
+
+    if (axis.arrowTip === null) {
+      return;
+    }
+
+    const wingAngle = 25 * Math.PI / 180;
+    const arrowSize = 12;
+    const tipAngle = Math.atan2(axis.dirY, axis.dirX);
+
+    const tipX = axis.arrowTip.x;
+    const tipY = axis.arrowTip.y;
+
+    const leftX = tipX - arrowSize * Math.cos(tipAngle - wingAngle);
+    const leftY = tipY - arrowSize * Math.sin(tipAngle - wingAngle);
+
+    const rightX = tipX - arrowSize * Math.cos(tipAngle + wingAngle);
+    const rightY = tipY - arrowSize * Math.sin(tipAngle + wingAngle);
+
+    this.#ctx.beginPath();
+      this.#ctx.moveTo(tipX, tipY);
+      this.#ctx.lineTo(leftX, leftY);
+    this.#ctx.stroke();
+
+    this.#ctx.beginPath();
+      this.#ctx.moveTo(tipX, tipY);
+      this.#ctx.lineTo(rightX, rightY);
+    this.#ctx.stroke();
+
+    this.#ctx.font = 'bold 16px Arial';
+    this.#ctx.fillStyle = axis.color;
+
+    const textMetrics = this.#ctx.measureText(axis.label);
+    const halfW = textMetrics.width * 0.5;
+    const halfH = 8;
+    const padding = 4;
+
+    const perpX = rotateSign * -axis.dirY;
+    const perpY = rotateSign * axis.dirX;
+
+    const labelOffset = 16;
+
+    let labelX = tipX + perpX * labelOffset;
+    let labelY = tipY + perpY * labelOffset;
+
+    labelX = Math.min(Math.max(labelX, halfW + padding), this.#width - halfW - padding);
+    labelY = Math.min(Math.max(labelY, halfH + padding), this.#height - halfH - padding);
+
+    this.#ctx.textAlign = 'center';
+    this.#ctx.textBaseline = 'middle';
+
+    this.#ctx.fillText(axis.label, labelX, labelY);
+
+    this.#ctx.textAlign = 'start';
+    this.#ctx.textBaseline = 'alphabetic';
   }
 
   constructor(canvas, width, height) {
@@ -579,7 +718,7 @@ class Context {
       };
     }
 
-    const { verticalLines, horizontalLines, axisX, axisY } = this.#gridCache.lines;
+    const { verticalLines, horizontalLines, xAxis, yAxis } = this.#gridCache.lines;
 
     this.#ctx.lineWidth = 1;
     this.#ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
@@ -600,15 +739,8 @@ class Context {
 
     this.#ctx.lineWidth = 2;
 
-    this.#ctx.beginPath();
-      this.#ctx.moveTo(axisX.x1, axisX.y1);
-      this.#ctx.lineTo(axisX.x2, axisX.y2);
-    this.#ctx.stroke();
-
-    this.#ctx.beginPath();
-      this.#ctx.moveTo(axisY.x1, axisY.y1);
-      this.#ctx.lineTo(axisY.x2, axisY.y2);
-    this.#ctx.stroke();
+    this.#drawAxis(xAxis, -1);
+    this.#drawAxis(yAxis, 1);
   }
 
   drawVector(vector) {
