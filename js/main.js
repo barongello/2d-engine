@@ -130,8 +130,12 @@ function animationLoop(time = 0) {
 animationLoop();
 
 const activePointers = new Map();
-
 let currentGesture = null;
+let mouseRotate = null;
+
+canvas.addEventListener('contextmenu', event => {
+  event.preventDefault();
+});
 
 function getCanvasScale() {
   const bounding = canvas.getBoundingClientRect();
@@ -158,17 +162,79 @@ function computeGesture(points) {
   cy /= n;
 
   let spread = 0;
+  let sumCos = 0;
+  let sumSin = 0;
 
   for (const p of points) {
-    spread += Math.hypot(p.x - cx, p.y - cy);
+    const vx = p.x - cx;
+    const vy = p.y - cy;
+
+    spread += Math.hypot(vx, vy);
+
+    const pointAngle = Math.atan2(vy, vx);
+
+    sumCos += Math.cos(pointAngle);
+    sumSin += Math.sin(pointAngle);
   }
 
   spread /= n;
 
-  return { cx, cy, spread };
+  const angle = Math.atan2(sumSin, sumCos);
+
+  return { cx, cy, spread, angle };
+}
+
+function normalizeAngleDelta(deltaRad) {
+  return Math.atan2(Math.sin(deltaRad), Math.cos(deltaRad));
+}
+
+function computeAnchoredOrigin(anchor, oldOrigin, oldZoom, oldRotationDeg, newZoom, newRotationDeg) {
+  const oldRad = oldRotationDeg * Math.PI / 180;
+  const newRad = newRotationDeg * Math.PI / 180;
+
+  const dx = anchor.x - oldOrigin.x;
+  const dy = anchor.y - oldOrigin.y;
+
+  const cosOld = Math.cos(oldRad);
+  const sinOld = Math.sin(oldRad);
+
+  const rx = dx * cosOld + dy * sinOld;
+  const ry = -dx * sinOld + dy * cosOld;
+
+  const worldX = rx / oldZoom.x;
+  const worldY = ry / oldZoom.y;
+
+  const scaledX = worldX * newZoom.x;
+  const scaledY = worldY * newZoom.y;
+
+  const cosNew = Math.cos(newRad);
+  const sinNew = Math.sin(newRad);
+
+  const finalX = scaledX * cosNew - scaledY * sinNew;
+  const finalY = scaledX * sinNew + scaledY * cosNew;
+
+  return {
+    x: anchor.x - finalX,
+    y: anchor.y - finalY
+  };
 }
 
 canvas.addEventListener('pointerdown', event => {
+  if (event.pointerType === 'mouse' && event.button === 2) {
+    canvas.setPointerCapture(event.pointerId);
+
+    const { scaleX, scaleY, bounding } = getCanvasScale();
+
+    mouseRotate = {
+      pointerId: event.pointerId,
+      pivotX: (event.clientX - bounding.left) * scaleX,
+      pivotY: (event.clientY - bounding.top) * scaleY,
+      lastAngle: null
+    };
+
+    return;
+  }
+
   if (event.pointerType === 'mouse' && event.button !== 0) {
     return;
   }
@@ -182,6 +248,47 @@ canvas.addEventListener('pointerdown', event => {
 
 canvas.addEventListener('pointermove', event => {
   const { scaleX, scaleY, bounding } = getCanvasScale();
+
+  const isRightMouseDrag = event.pointerType === 'mouse'
+    && mouseRotate !== null
+    && event.pointerId === mouseRotate.pointerId
+    && (event.buttons & 2) !== 0;
+
+  if (isRightMouseDrag === true) {
+    const mouseX = (event.clientX - bounding.left) * scaleX;
+    const mouseY = (event.clientY - bounding.top) * scaleY;
+
+    const vx = mouseX - mouseRotate.pivotX;
+    const vy = mouseY - mouseRotate.pivotY;
+
+    if (Math.hypot(vx, vy) > 1) {
+      const angle = Math.atan2(vy, vx);
+
+      if (mouseRotate.lastAngle !== null) {
+        const deltaRad = normalizeAngleDelta(angle - mouseRotate.lastAngle);
+        const newRotation = ctx.rotation() + deltaRad * 180 / Math.PI;
+
+        const newOrigin = computeAnchoredOrigin(
+          { x: mouseRotate.pivotX, y: mouseRotate.pivotY },
+          ctx.origin(),
+          ctx.zoom(),
+          ctx.rotation(),
+          ctx.zoom(),
+          newRotation
+        );
+
+        ctx.setRotation(newRotation);
+        ctx.setOrigin(newOrigin.x, newOrigin.y);
+      }
+
+      mouseRotate.lastAngle = angle;
+    }
+
+    vector1.set(0, 0, mouseX - ctx.origin().x);
+    vector1.set(1, 0, mouseY - ctx.origin().y);
+
+    return;
+  }
 
   let referenceX = event.clientX;
   let referenceY = event.clientY;
@@ -205,23 +312,37 @@ canvas.addEventListener('pointermove', event => {
         ctx.origin().y + dy
       );
 
-      if (isMultiTouch === true && currentGesture.spread > 0) {
-        const zoomRatio = current.spread / currentGesture.spread;
-
+      if (isMultiTouch === true) {
         const oldZoom = ctx.zoom();
-        const newZoomX = Math.max(oldZoom.x * zoomRatio, 2 * ZOOM_STEP);
-        const newZoomY = Math.max(oldZoom.y * zoomRatio, 2 * ZOOM_STEP);
+
+        let newZoomX = oldZoom.x;
+        let newZoomY = oldZoom.y;
+
+        if (currentGesture.spread > 0 && current.spread > 0) {
+          const zoomRatio = current.spread / currentGesture.spread;
+
+          newZoomX = Math.max(oldZoom.x * zoomRatio, 2 * ZOOM_STEP);
+          newZoomY = Math.max(oldZoom.y * zoomRatio, 2 * ZOOM_STEP);
+        }
+
+        const angleDeltaRad = normalizeAngleDelta(current.angle - currentGesture.angle);
+        const newRotation = ctx.rotation() + angleDeltaRad * 180 / Math.PI;
 
         const anchorX = (current.cx - bounding.left) * scaleX;
         const anchorY = (current.cy - bounding.top) * scaleY;
 
-        const oldOrigin = ctx.origin();
-
-        const newOriginX = anchorX - (anchorX - oldOrigin.x) * (newZoomX / oldZoom.x);
-        const newOriginY = anchorY - (anchorY - oldOrigin.y) * (newZoomY / oldZoom.y);
+        const newOrigin = computeAnchoredOrigin(
+          { x: anchorX, y: anchorY },
+          ctx.origin(),
+          oldZoom,
+          ctx.rotation(),
+          { x: newZoomX, y: newZoomY },
+          newRotation
+        );
 
         ctx.setZoom(newZoomX, newZoomY);
-        ctx.setOrigin(newOriginX, newOriginY);
+        ctx.setRotation(newRotation);
+        ctx.setOrigin(newOrigin.x, newOrigin.y);
       }
     }
 
@@ -236,6 +357,10 @@ canvas.addEventListener('pointermove', event => {
 });
 
 function releasePointer(event) {
+  if (mouseRotate !== null && event.pointerId === mouseRotate.pointerId) {
+    mouseRotate = null;
+  }
+
   if (activePointers.has(event.pointerId) === false) {
     return;
   }
@@ -248,7 +373,6 @@ function releasePointer(event) {
 }
 
 canvas.addEventListener('pointerup', releasePointer);
-
 canvas.addEventListener('pointercancel', releasePointer);
 
 canvas.addEventListener('wheel', event => {
@@ -276,13 +400,19 @@ canvas.addEventListener('wheel', event => {
   const newZoomX = oldZoom.x + amount;
   const newZoomY = oldZoom.y + amount;
 
-  const oldOrigin = ctx.origin();
+  const rotation = ctx.rotation();
 
-  const newOriginX = mouseX - (mouseX - oldOrigin.x) * (newZoomX / oldZoom.x);
-  const newOriginY = mouseY - (mouseY - oldOrigin.y) * (newZoomY / oldZoom.y);
+  const newOrigin = computeAnchoredOrigin(
+    { x: mouseX, y: mouseY },
+    ctx.origin(),
+    oldZoom,
+    rotation,
+    { x: newZoomX, y: newZoomY },
+    rotation
+  );
 
   ctx.setZoom(newZoomX, newZoomY);
-  ctx.setOrigin(newOriginX, newOriginY);
+  ctx.setOrigin(newOrigin.x, newOrigin.y);
 
   vector1.set(0, 0, mouseX - ctx.origin().x);
   vector1.set(1, 0, mouseY - ctx.origin().y);
