@@ -1,10 +1,16 @@
 # 2D Engine
 
+<p align="center">
+  <img src="./img/banner.png" alt="2D Engine" width="720" />
+</p>
+
 A simple 2D engine written from scratch for educational purposes
 
 You can see it running [here](https://barongello.github.io/2d-engine)
 
 There are objects, movements, scalings and rotations that fail in every wrong matrices order. Feel free to explore
+
+
 
 ---
 
