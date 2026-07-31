@@ -38,6 +38,17 @@ canvas {
   margin-top: 5px;
 }
 
+#info-controls {
+  display: flex;
+  flex-direction: row;
+  column-gap: 10px;
+  align-items: center;
+}
+
+button {
+  padding: 5px;
+}
+
 #transformation-order-container {
   margin-top: 5px;
 }

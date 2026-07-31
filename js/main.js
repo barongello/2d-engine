@@ -8,6 +8,9 @@ const mainContainer = document.getElementById('main-container');
 const canvas = document.getElementById('canvas');
 const animationSpeed = document.getElementById('animation-speed');
 const animationSpeedValue = document.getElementById('animation-speed-value');
+const animating = document.getElementById('animating');
+const nextFrame = document.getElementById('next-frame');
+const reset = document.getElementById('reset');
 const transformationOrder = document.getElementById('transformation-order');
 
 mainContainer.style.width = `${CANVAS_WIDTH}px`;
@@ -121,7 +124,10 @@ function animationLoop(time = 0) {
     fpsTimer = 0;
   }
 
-  updateFrame(dt);
+  if (animating.checked === true) {
+    updateFrame(dt);
+  }
+
   drawFrame();
 
   requestAnimationFrame(animationLoop);
@@ -442,7 +448,26 @@ canvas.addEventListener('wheel', event => {
 animationSpeed.addEventListener('input', event => {
   speedMultiplier = Number(animationSpeed.value);
 
-  animationSpeedValue.innerText = animationSpeed.value;
+  animationSpeedValue.innerText = speedMultiplier.toFixed(2);
+});
+
+animating.addEventListener('change', event => {
+  if (animating.checked === true) {
+    nextFrame.setAttribute('disabled', 'true');
+  }
+  else {
+    nextFrame.removeAttribute('disabled');
+  }
+});
+
+nextFrame.addEventListener('click', event => {
+  updateFrame(FRAME_TIME);
+});
+
+reset.addEventListener('click', event => {
+  ctx.setOrigin(canvas.width * 0.5, canvas.height * 0.5);
+  ctx.setRotation(0);
+  ctx.setZoom(1, 1);
 });
 
 transformationOrder.addEventListener('change', event => {
