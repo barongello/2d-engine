@@ -38,7 +38,7 @@ canvas {
   margin-top: 5px;
 }
 
-#info-controls {
+#info-frame-controls, #zoom-controls {
   display: flex;
   flex-direction: row;
   column-gap: 10px;

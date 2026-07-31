@@ -752,6 +752,7 @@ class Context {
       const newVectorOrigin = this.#applyMatrices([this.#transformationMatrix], vectorOrigin);
       const newVector = this.#applyMatrices([this.#transformationMatrix], vector);
 
+      this.#ctx.lineWidth = 2 * Math.min(Math.abs(this.#zoom.x), Math.abs(this.#zoom.y));
       this.#ctx.strokeStyle = '#ffffff';
 
       this.#ctx.beginPath();
@@ -799,6 +800,7 @@ class Context {
   }
 
   drawPolygon(points, stroke = '#ffffff', fill = '#ff0000') {
+    this.#ctx.lineWidth = Math.min(Math.abs(this.#zoom.x), Math.abs(this.#zoom.y));
     this.#ctx.strokeStyle = stroke;
     this.#ctx.fillStyle = fill;
 

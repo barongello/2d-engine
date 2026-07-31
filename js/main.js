@@ -3,6 +3,7 @@ const CANVAS_HEIGHT = 405;
 const FRAME_TIME = 1000 / 60;
 const MAX_FRAME_TIME = 1000 / 30;
 const ZOOM_STEP = 0.1;
+const MAX_ZOOM = 10;
 
 const mainContainer = document.getElementById('main-container');
 const canvas = document.getElementById('canvas');
@@ -11,9 +12,19 @@ const animationSpeedValue = document.getElementById('animation-speed-value');
 const animating = document.getElementById('animating');
 const nextFrame = document.getElementById('next-frame');
 const reset = document.getElementById('reset');
+const zoomX = document.getElementById('zoom-x');
+const zoomY = document.getElementById('zoom-y');
 const transformationOrder = document.getElementById('transformation-order');
 
 mainContainer.style.width = `${CANVAS_WIDTH}px`;
+
+zoomX.setAttribute('min', (-MAX_ZOOM).toFixed(2));
+zoomX.setAttribute('max', MAX_ZOOM.toFixed(2));
+zoomX.setAttribute('step', ZOOM_STEP.toFixed(2));
+
+zoomY.setAttribute('min', (-MAX_ZOOM).toFixed(2));
+zoomY.setAttribute('max', MAX_ZOOM.toFixed(2));
+zoomY.setAttribute('step', ZOOM_STEP.toFixed(2));
 
 const ctx = new Context(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
 
@@ -134,6 +145,11 @@ function animationLoop(time = 0) {
 }
 
 animationLoop();
+
+function updateZoomControls() {
+  zoomX.value = ctx.zoom().x.toFixed(2);
+  zoomY.value = ctx.zoom().y.toFixed(2);
+}
 
 const activePointers = new Map();
 let currentGesture = null;
@@ -324,12 +340,28 @@ function handleGestureSample(sample, scaleX, scaleY, bounding) {
 
         let newZoomX = oldZoom.x;
         let newZoomY = oldZoom.y;
+        let updateZoom = true;
 
         if (currentGesture.spread > 0 && current.spread > 0) {
-          const zoomRatio = current.spread / currentGesture.spread;
+          const zoomRatio = Math.sign(current.spread - currentGesture.spread) * current.spread / currentGesture.spread;
 
-          newZoomX = Math.max(oldZoom.x * zoomRatio, 2 * ZOOM_STEP);
-          newZoomY = Math.max(oldZoom.y * zoomRatio, 2 * ZOOM_STEP);
+          let step = Math.floor(ZOOM_STEP * zoomRatio * 10) / 10;
+
+          newZoomX = oldZoom.x + step;
+          newZoomY = oldZoom.y + step;
+
+          if (Math.abs(newZoomX) > MAX_ZOOM) {
+            updateZoom = false;
+          }
+
+          if (Math.abs(newZoomY) > MAX_ZOOM) {
+            updateZoom = false;
+          }
+
+          if (updateZoom === false) {
+            newZoomX = oldZoom.x;
+            newZoomY = oldZoom.y;
+          }
         }
 
         const angleDeltaRad = normalizeAngleDelta(current.angle - currentGesture.angle);
@@ -347,7 +379,12 @@ function handleGestureSample(sample, scaleX, scaleY, bounding) {
           newRotation
         );
 
-        ctx.setZoom(newZoomX, newZoomY);
+        if (updateZoom === true) {
+          ctx.setZoom(newZoomX, newZoomY);
+
+          updateZoomControls();
+        }
+
         ctx.setRotation(newRotation);
         ctx.setOrigin(newOrigin.x, newOrigin.y);
       }
@@ -410,7 +447,7 @@ canvas.addEventListener('wheel', event => {
   if (event.deltaY < 0) {
     amount = ZOOM_STEP;
   }
-  else if (event.deltaY > 0 && ctx.zoom().x > 2 * ZOOM_STEP && ctx.zoom().y > 2 * ZOOM_STEP) {
+  else if (event.deltaY > 0) {
     amount = -ZOOM_STEP;
   }
 
@@ -427,6 +464,14 @@ canvas.addEventListener('wheel', event => {
   const newZoomX = oldZoom.x + amount;
   const newZoomY = oldZoom.y + amount;
 
+  if (Math.abs(newZoomX) > MAX_ZOOM) {
+    return;
+  }
+
+  if (Math.abs(newZoomY) > MAX_ZOOM) {
+    return;
+  }
+
   const rotation = ctx.rotation();
 
   const newOrigin = computeAnchoredOrigin(
@@ -440,6 +485,8 @@ canvas.addEventListener('wheel', event => {
 
   ctx.setZoom(newZoomX, newZoomY);
   ctx.setOrigin(newOrigin.x, newOrigin.y);
+
+  updateZoomControls();
 
   vector1.set(0, 0, mouseX - ctx.origin().x);
   vector1.set(1, 0, mouseY - ctx.origin().y);
@@ -468,6 +515,14 @@ reset.addEventListener('click', event => {
   ctx.setOrigin(canvas.width * 0.5, canvas.height * 0.5);
   ctx.setRotation(0);
   ctx.setZoom(1, 1);
+});
+
+zoomX.addEventListener('input', event => {
+  ctx.setZoom(Number(zoomX.value), ctx.zoom().y);
+});
+
+zoomY.addEventListener('input', event => {
+  ctx.setZoom(ctx.zoom().x, Number(zoomY.value));
 });
 
 transformationOrder.addEventListener('change', event => {
