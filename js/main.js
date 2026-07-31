@@ -74,6 +74,7 @@ let lastTime = null;
 let angle = 0;
 
 function updateFrame(dt) {
+  return
   dt = Math.min(dt, MAX_FRAME_TIME);
   dt *= speedMultiplier;
 
