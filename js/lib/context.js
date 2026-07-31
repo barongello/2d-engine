@@ -252,7 +252,7 @@ class Context {
 
     this.#transformationMatrixHistory.push(historyEntry);
 
-    this.#scope = `${this.#scope} -> ${scope}`;
+    this.#scope = `${this.#scope} → ${scope}`;
 
     this.#updateLogEntry('before');
 
@@ -278,11 +278,9 @@ class Context {
       return;
     }
 
-    --this.#logLevel;
-
     const historyEntry = this.#transformationMatrixHistory.pop();
 
-    this.#scope = `${this.#scope} -> ${historyEntry.scope}`;
+    this.#scope = `${this.#scope} → ${historyEntry.scope}`;
 
     this.#updateLogEntry('before');
 
@@ -296,6 +294,8 @@ class Context {
     this.#updateLogEntry('after');
 
     this.#addLogEntry('Restoring');
+
+    --this.#logLevel;
 
     this.#scope = historyEntry.scope;
   }
