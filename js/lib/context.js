@@ -1,3 +1,5 @@
+const ORIGIN = Matrix.newFromArray([[0], [0], [1]]);
+
 class Context {
   #canvas = null;
   #ctx = null;
@@ -747,9 +749,7 @@ class Context {
     this.save('Vector');
       this.translate(this.#origin.x, this.#origin.y);
 
-      const vectorOrigin = Matrix.newFromArray([[0], [0], [1]]);
-
-      const newVectorOrigin = this.#applyMatrices([this.#transformationMatrix], vectorOrigin);
+      const newVectorOrigin = this.#applyMatrices([this.#transformationMatrix], ORIGIN);
       const newVector = this.#applyMatrices([this.#transformationMatrix], vector);
 
       this.#ctx.lineWidth = 2 * Math.min(Math.abs(this.#zoom.x), Math.abs(this.#zoom.y));
