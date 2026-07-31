@@ -93,7 +93,7 @@ function updateFrame(dt) {
   angle += dt * (0.1 / FRAME_TIME);
 }
 
-function drawFrame(dt) {
+function drawFrame() {
   ctx.drawBegin();
     ctx.drawBackground();
     ctx.drawGrid();
@@ -122,7 +122,7 @@ function animationLoop(time = 0) {
   }
 
   updateFrame(dt);
-  drawFrame(dt);
+  drawFrame();
 
   requestAnimationFrame(animationLoop);
 }
