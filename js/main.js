@@ -515,6 +515,8 @@ reset.addEventListener('click', event => {
   ctx.setOrigin(canvas.width * 0.5, canvas.height * 0.5);
   ctx.setRotation(0);
   ctx.setZoom(1, 1);
+
+  updateZoomControls();
 });
 
 zoomX.addEventListener('input', event => {
