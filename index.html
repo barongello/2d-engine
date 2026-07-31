@@ -12,17 +12,17 @@
   <div id="main-container">
     <canvas id="canvas"></canvas>
 
-    <div>
+    <div id="animation-speed-container">
       <input type="range" id="animation-speed" min="0.1" max="10" step="0.1" value="1" />
+
+      <span>
+        Speed:
+
+        <span id="animation-speed-value">1.0</span>
+      </span>
     </div>
 
-    <div>
-      Speed:
-
-      <span id="animation-speed-value">1.0</span>
-    </div>
-
-    <div>
+    <div id="transformation-order-container">
       Order of transformations (apply from right to left):
 
       <select id="transformation-order">
@@ -31,7 +31,7 @@
         <option value="2">Rotate, Translate, Scale (Wrong: position defect)</option>
         <option value="3">Rotate, Scale, Translate (Wrong: position defect, more severe)</option>
         <option value="4">Scale, Translate, Rotate (Wrong: shape and position defects)</option>
-        <option value="5">Scale, Rotate, Translate (Wrong: shape and position defects)</option>
+        <option value="5">Scale, Rotate, Translate (Wrong: shape and position defects, more severe)</option>
       </select>
     </div>
   </div>

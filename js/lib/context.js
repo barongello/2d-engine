@@ -223,7 +223,7 @@ class Context {
         this.#transformationMatrixOrder = ['S', 'T', 'R']; // Wrong: shape and position defects
         break;
       case 5:
-        this.#transformationMatrixOrder = ['S', 'R', 'T']; // Wrong: shape and position defects
+        this.#transformationMatrixOrder = ['S', 'R', 'T']; // Wrong: shape and position defects, more severe
         break;
       default:
         this.#transformationMatrixOrder = ['T', 'R', 'S']; // Correct

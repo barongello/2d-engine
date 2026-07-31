@@ -31,13 +31,22 @@ canvas {
   image-rendering: crisp-edges;
 }
 
-#animation-speed {
-  width: 100%;
+#animation-speed-container {
+  display: flex;
+  flex-direction: column;
+  row-gap: 5px;
+  margin-top: 5px;
+}
+
+#transformation-order-container {
+  margin-top: 5px;
 }
 
 #transformation-order {
   padding: 5px;
-  margin-left: 5px;
+  margin-top: 5px;
+  display: block;
+  width: 100%;
 }
 
 #dump {
