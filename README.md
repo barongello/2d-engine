@@ -51,7 +51,7 @@ R = \begin{bmatrix} \cos\theta & \sin\theta & 0 \\\\ -\sin\theta & \cos\theta & 
 S = \begin{bmatrix} s_x & 0 & 0 \\\\ 0 & s_y & 0 \\\\ 0 & 0 & 1 \end{bmatrix}
 $$
 
-Note: the `-` sign in the `sin` of the $R$ matrix gives the direction of the rotation: `clockwise` or `counter clockwise`. One of the `sin` should be positive and the other should be negative. The direction of the rotation also depends on the direction of your `y`axis
+Note: the `-` sign in the `sin` of the $R$ matrix gives the direction of the rotation: `clockwise` or `counter-clockwise`. One of the `sin` should be positive and the other should be negative. The direction of the rotation also depends on the direction of your `y`axis
 
 We compute a composite matrix $M$ by multiplying these three (in some order)
 

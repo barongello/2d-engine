@@ -302,6 +302,7 @@ class Star extends Figure {
     let bottom = -Infinity;
     let right = -Infinity;
 
+    // Add points clockwise
     for (let i = 0; i < 2 * n; ++i) {
       const angle = -Math.PI * 0.5 + i * Math.PI / n;
       const r = (i & 1) === 0 ? or : ir;

@@ -211,19 +211,19 @@ class Context {
   setTransformationMatrixOrder(option) {
     switch (option) {
       case 1:
-        this.#transformationMatrixOrder = ['T', 'S', 'R']; // Wrong
+        this.#transformationMatrixOrder = ['T', 'S', 'R']; // Wrong: shape defect
         break;
       case 2:
-        this.#transformationMatrixOrder = ['R', 'T', 'S']; // Wrong
+        this.#transformationMatrixOrder = ['R', 'T', 'S']; // Wrong: position defect
         break;
       case 3:
-        this.#transformationMatrixOrder = ['R', 'S', 'T']; // Wrong
+        this.#transformationMatrixOrder = ['R', 'S', 'T']; // Wrong: position defect, more severe
         break;
       case 4:
-        this.#transformationMatrixOrder = ['S', 'T', 'R']; // Wrong
+        this.#transformationMatrixOrder = ['S', 'T', 'R']; // Wrong: shape and position defects
         break;
       case 5:
-        this.#transformationMatrixOrder = ['S', 'R', 'T']; // Wrong
+        this.#transformationMatrixOrder = ['S', 'R', 'T']; // Wrong: shape and position defects
         break;
       default:
         this.#transformationMatrixOrder = ['T', 'R', 'S']; // Correct
