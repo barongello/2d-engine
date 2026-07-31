@@ -18,6 +18,7 @@ class Context {
   #logLevel = 0;
   #logCurrent = {};
   #scope = 'Root';
+  #gridCache = null;
 
   #addLogEntry(reason) {
     this.#logCurrent.reason = reason;
@@ -94,6 +95,71 @@ class Context {
     this.#transformationMatrix.copyFromMatrix(
       Matrix.multiplyMatrices(this.#base, newTransformationMatrix)
     );
+  }
+
+  #computeGridLines(step) {
+    const zoom = this.#zoom;
+    const minZoom = Math.max(Math.min(Math.abs(zoom.x), Math.abs(zoom.y)), 0.001);
+
+    const cornerDistances = [
+      Math.hypot(this.#origin.x, this.#origin.y),
+      Math.hypot(this.#width - this.#origin.x, this.#origin.y),
+      Math.hypot(this.#origin.x, this.#height - this.#origin.y),
+      Math.hypot(this.#width - this.#origin.x, this.#height - this.#origin.y)
+    ];
+
+    const maxScreenDistance = Math.max(...cornerDistances);
+
+    const extent = Math.ceil((maxScreenDistance / minZoom) / step) * step + step;
+
+    this.save('Grid');
+      this.translate(this.#origin.x, this.#origin.y);
+      this.rotate(this.#rotation);
+      this.scale(zoom.x, zoom.y);
+
+      const transform = point => this.#applyMatrices([this.#transformationMatrix], point);
+
+      const verticalLines = [];
+      const horizontalLines = [];
+
+      for (let x = -extent; x <= extent; x += step) {
+        const p1 = transform(Matrix.newFromArray([[x], [-extent], [1]]));
+        const p2 = transform(Matrix.newFromArray([[x], [extent], [1]]));
+
+        verticalLines.push({
+          x1: p1.get(0, 0), y1: p1.get(1, 0),
+          x2: p2.get(0, 0), y2: p2.get(1, 0)
+        });
+      }
+
+      for (let y = -extent; y <= extent; y += step) {
+        const p1 = transform(Matrix.newFromArray([[-extent], [y], [1]]));
+        const p2 = transform(Matrix.newFromArray([[extent], [y], [1]]));
+
+        horizontalLines.push({
+          x1: p1.get(0, 0), y1: p1.get(1, 0),
+          x2: p2.get(0, 0), y2: p2.get(1, 0)
+        });
+      }
+
+      const axisX1 = transform(Matrix.newFromArray([[0], [-extent], [1]]));
+      const axisX2 = transform(Matrix.newFromArray([[0], [extent], [1]]));
+
+      const axisX = {
+        x1: axisX1.get(0, 0), y1: axisX1.get(1, 0),
+        x2: axisX2.get(0, 0), y2: axisX2.get(1, 0)
+      };
+
+      const axisY1 = transform(Matrix.newFromArray([[-extent], [0], [1]]));
+      const axisY2 = transform(Matrix.newFromArray([[extent], [0], [1]]));
+
+      const axisY = {
+        x1: axisY1.get(0, 0), y1: axisY1.get(1, 0),
+        x2: axisY2.get(0, 0), y2: axisY2.get(1, 0)
+      };
+    this.restore();
+
+    return { verticalLines, horizontalLines, axisX, axisY };
   }
 
   constructor(canvas, width, height) {
@@ -501,65 +567,48 @@ class Context {
     }
 
     const zoom = this.#zoom;
-    const minZoom = Math.max(Math.min(Math.abs(zoom.x), Math.abs(zoom.y)), 0.001);
+    const rotation = this.#rotation;
+    const origin = this.#origin;
 
-    const cornerDistances = [
-      Math.hypot(this.#origin.x, this.#origin.y),
-      Math.hypot(this.#width - this.#origin.x, this.#origin.y),
-      Math.hypot(this.#origin.x, this.#height - this.#origin.y),
-      Math.hypot(this.#width - this.#origin.x, this.#height - this.#origin.y)
-    ];
+    const cacheKey = `${origin.x}|${origin.y}|${zoom.x}|${zoom.y}|${rotation}|${step}|${this.#width}|${this.#height}`;
 
-    const maxScreenDistance = Math.max(...cornerDistances);
+    if (this.#gridCache === null || this.#gridCache.key !== cacheKey) {
+      this.#gridCache = {
+        key: cacheKey,
+        lines: this.#computeGridLines(step)
+      };
+    }
 
-    const extent = Math.ceil((maxScreenDistance / minZoom) / step) * step + step;
+    const { verticalLines, horizontalLines, axisX, axisY } = this.#gridCache.lines;
 
     this.#ctx.lineWidth = 1;
     this.#ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
 
-    this.save('Grid');
-      this.translate(this.#origin.x, this.#origin.y);
-      this.rotate(this.#rotation);
-      this.scale(zoom.x, zoom.y);
-
-      for (let x = -extent; x <= extent; x += step) {
-        const p1 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[x], [-extent], [1]]));
-        const p2 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[x], [extent], [1]]));
-
-        this.#ctx.beginPath();
-          this.#ctx.moveTo(p1.get(0, 0), p1.get(1, 0));
-          this.#ctx.lineTo(p2.get(0, 0), p2.get(1, 0));
-        this.#ctx.stroke();
-      }
-
-      for (let y = -extent; y <= extent; y += step) {
-        const p1 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[-extent], [y], [1]]));
-        const p2 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[extent], [y], [1]]));
-
-        this.#ctx.beginPath();
-          this.#ctx.moveTo(p1.get(0, 0), p1.get(1, 0));
-          this.#ctx.lineTo(p2.get(0, 0), p2.get(1, 0));
-        this.#ctx.stroke();
-      }
-
-      this.#ctx.lineWidth = 2;
-
-      const axisX1 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[0], [-extent], [1]]));
-      const axisX2 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[0], [extent], [1]]));
-
+    for (const line of verticalLines) {
       this.#ctx.beginPath();
-        this.#ctx.moveTo(axisX1.get(0, 0), axisX1.get(1, 0));
-        this.#ctx.lineTo(axisX2.get(0, 0), axisX2.get(1, 0));
+        this.#ctx.moveTo(line.x1, line.y1);
+        this.#ctx.lineTo(line.x2, line.y2);
       this.#ctx.stroke();
+    }
 
-      const axisY1 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[-extent], [0], [1]]));
-      const axisY2 = this.#applyMatrices([this.#transformationMatrix], Matrix.newFromArray([[extent], [0], [1]]));
-
+    for (const line of horizontalLines) {
       this.#ctx.beginPath();
-        this.#ctx.moveTo(axisY1.get(0, 0), axisY1.get(1, 0));
-        this.#ctx.lineTo(axisY2.get(0, 0), axisY2.get(1, 0));
+        this.#ctx.moveTo(line.x1, line.y1);
+        this.#ctx.lineTo(line.x2, line.y2);
       this.#ctx.stroke();
-    this.restore();
+    }
+
+    this.#ctx.lineWidth = 2;
+
+    this.#ctx.beginPath();
+      this.#ctx.moveTo(axisX.x1, axisX.y1);
+      this.#ctx.lineTo(axisX.x2, axisX.y2);
+    this.#ctx.stroke();
+
+    this.#ctx.beginPath();
+      this.#ctx.moveTo(axisY.x1, axisY.y1);
+      this.#ctx.lineTo(axisY.x2, axisY.y2);
+    this.#ctx.stroke();
   }
 
   drawVector(vector) {
