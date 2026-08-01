@@ -9,7 +9,6 @@ const ZOOM_PIXELS_PER_STEP = 1;
 const mainContainer = document.getElementById('main-container');
 const canvas = document.getElementById('canvas');
 const animationSpeed = document.getElementById('animation-speed');
-const animationSpeedValue = document.getElementById('animation-speed-value');
 const animating = document.getElementById('animating');
 const nextFrame = document.getElementById('next-frame');
 const reset = document.getElementById('reset');
@@ -115,7 +114,7 @@ function drawFrame() {
     ctx.drawGrid();
     ctx.drawChildren();
     ctx.drawVector(vector1);
-    ctx.drawInfo(fps);
+    ctx.drawInfo(speedMultiplier, fps);
   ctx.drawEnd();
 }
 
@@ -544,8 +543,6 @@ canvas.addEventListener('wheel', event => {
 
 animationSpeed.addEventListener('input', event => {
   speedMultiplier = Number(animationSpeed.value);
-
-  animationSpeedValue.innerText = speedMultiplier.toFixed(2);
 });
 
 animating.addEventListener('change', event => {

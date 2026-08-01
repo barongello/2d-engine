@@ -31,18 +31,24 @@ canvas {
   image-rendering: crisp-edges;
 }
 
-#animation-speed-container {
+#animation-data-container {
   display: flex;
   flex-direction: column;
   row-gap: 5px;
   margin-top: 5px;
 }
 
-#info-frame-controls, #zoom-controls, #anchors-controls {
+#animation-controls, #zoom-controls, #anchors-controls {
   display: flex;
   flex-direction: row;
   column-gap: 10px;
   align-items: center;
+}
+
+#animation-controls > input {
+  flex: 1;
+  width: 100%;
+  min-width: 50px;
 }
 
 #zoom-controls > input {
