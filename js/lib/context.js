@@ -99,20 +99,17 @@ class Context {
     );
   }
 
-  #intersectRayRect(ox, oy, dx, dy, minX, minY, maxX, maxY) {
+  #intersectLineRect(ox, oy, dx, dy, minX, minY, maxX, maxY) {
     const EPS = 1e-6;
-    let bestT = Infinity;
+    const candidates = [];
 
     if (dx !== 0) {
       for (const boundX of [minX, maxX]) {
         const t = (boundX - ox) / dx;
+        const y = oy + t * dy;
 
-        if (t > EPS) {
-          const y = oy + t * dy;
-
-          if (y >= minY - EPS && y <= maxY + EPS) {
-            bestT = Math.min(bestT, t);
-          }
+        if (y >= minY - EPS && y <= maxY + EPS) {
+          candidates.push(t);
         }
       }
     }
@@ -120,20 +117,19 @@ class Context {
     if (dy !== 0) {
       for (const boundY of [minY, maxY]) {
         const t = (boundY - oy) / dy;
+        const x = ox + t * dx;
 
-        if (t > EPS) {
-          const x = ox + t * dx;
-
-          if (x >= minX - EPS && x <= maxX + EPS) {
-            bestT = Math.min(bestT, t);
-          }
+        if (x >= minX - EPS && x <= maxX + EPS) {
+          candidates.push(t);
         }
       }
     }
 
-    if (Number.isFinite(bestT) === false) {
+    if (candidates.length === 0) {
       return null;
     }
+
+    const bestT = Math.max(...candidates);
 
     return { x: ox + bestT * dx, y: oy + bestT * dy };
   }
@@ -194,17 +190,26 @@ class Context {
 
       const rotRad = this.#rotation * Math.PI / 180;
 
+      const signX = Math.sign(zoom.x);
+      const signY = Math.sign(zoom.y);
+
       const xAxisBase = transform(Matrix.newFromArray([[-extent], [0], [1]]));
       const xAxisFar = transform(Matrix.newFromArray([[extent], [0], [1]]));
 
-      const xDirX = Math.cos(rotRad);
-      const xDirY = Math.sin(rotRad);
+      let xArrowTip = null;
+      let xDirX = 0;
+      let xDirY = 0;
 
-      const xArrowTip = this.#intersectRayRect(
-        originScreen.get(0, 0), originScreen.get(1, 0),
-        xDirX, xDirY,
-        rectBounds.minX, rectBounds.minY, rectBounds.maxX, rectBounds.maxY
-      );
+      if (signX !== 0) {
+        xDirX = Math.cos(rotRad) * signX;
+        xDirY = Math.sin(rotRad) * signX;
+
+        xArrowTip = this.#intersectLineRect(
+          originScreen.get(0, 0), originScreen.get(1, 0),
+          xDirX, xDirY,
+          rectBounds.minX, rectBounds.minY, rectBounds.maxX, rectBounds.maxY
+        );
+      }
 
       const xAxis = {
         x1: xAxisBase.get(0, 0), y1: xAxisBase.get(1, 0),
@@ -218,14 +223,20 @@ class Context {
       const yAxisBase = transform(Matrix.newFromArray([[0], [-extent], [1]]));
       const yAxisFar = transform(Matrix.newFromArray([[0], [extent], [1]]));
 
-      const yDirX = -Math.sin(rotRad);
-      const yDirY = Math.cos(rotRad);
+      let yArrowTip = null;
+      let yDirX = 0;
+      let yDirY = 0;
 
-      const yArrowTip = this.#intersectRayRect(
-        originScreen.get(0, 0), originScreen.get(1, 0),
-        yDirX, yDirY,
-        rectBounds.minX, rectBounds.minY, rectBounds.maxX, rectBounds.maxY
-      );
+      if (signY !== 0) {
+        yDirX = -Math.sin(rotRad) * signY;
+        yDirY = Math.cos(rotRad) * signY;
+
+        yArrowTip = this.#intersectLineRect(
+          originScreen.get(0, 0), originScreen.get(1, 0),
+          yDirX, yDirY,
+          rectBounds.minX, rectBounds.minY, rectBounds.maxX, rectBounds.maxY
+        );
+      }
 
       const yAxis = {
         x1: yAxisBase.get(0, 0), y1: yAxisBase.get(1, 0),

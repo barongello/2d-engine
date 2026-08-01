@@ -4,6 +4,7 @@ const FRAME_TIME = 1000 / 60;
 const MAX_FRAME_TIME = 1000 / 30;
 const ZOOM_STEP = 0.1;
 const MAX_ZOOM = 10;
+const ZOOM_PIXELS_PER_STEP = 1;
 
 const mainContainer = document.getElementById('main-container');
 const canvas = document.getElementById('canvas');
@@ -252,6 +253,43 @@ function computeAnchoredOrigin(anchor, oldOrigin, oldZoom, oldRotationDeg, newZo
   };
 }
 
+let continuousZoom = null;
+
+function snapToStep(value, step) {
+  if (step <= 0) {
+    return value;
+  }
+
+  const snapped = Math.round(value / step) * step;
+
+  return Math.round(snapped * 1e10) / 1e10;
+}
+
+function preventBothZero(newX, newY, step, movingNegative) {
+  const EPS = Math.max(step * 1e-6, 1e-9);
+
+  const xIsZero = Math.abs(newX) <= EPS;
+  const yIsZero = Math.abs(newY) <= EPS;
+
+  if (xIsZero === true && yIsZero === true) {
+    const nudge = movingNegative ? -step : step;
+
+    return { x: nudge, y: nudge };
+  }
+
+  return { x: newX, y: newY };
+}
+
+function snapToStep(value, step) {
+  if (step <= 0) {
+    return value;
+  }
+
+  const snapped = Math.round(value / step) * step;
+
+  return Math.round(snapped * 1e10) / 1e10;
+}
+
 canvas.addEventListener('pointerdown', event => {
   if (event.pointerType === 'mouse' && event.button === 2) {
     canvas.setPointerCapture(event.pointerId);
@@ -339,29 +377,33 @@ function handleGestureSample(sample, scaleX, scaleY, bounding) {
       if (isMultiTouch === true) {
         const oldZoom = ctx.zoom();
 
+        if (continuousZoom === null) {
+          continuousZoom = { x: oldZoom.x, y: oldZoom.y };
+        }
+
         let newZoomX = oldZoom.x;
         let newZoomY = oldZoom.y;
-        let updateZoom = true;
+        let updateZoom = false;
 
-        if (currentGesture.spread > 0 && current.spread > 0) {
-          const zoomRatio = Math.sign(current.spread - currentGesture.spread) * current.spread / currentGesture.spread;
+        const spreadDelta = current.spread - currentGesture.spread;
 
-          let step = Math.floor(ZOOM_STEP * zoomRatio * 10) / 10;
+        if (spreadDelta !== 0) {
+          const zoomDelta = (spreadDelta / ZOOM_PIXELS_PER_STEP) * ZOOM_STEP;
 
-          newZoomX = oldZoom.x + step;
-          newZoomY = oldZoom.y + step;
+          continuousZoom.x = Math.max(Math.min(continuousZoom.x + zoomDelta, MAX_ZOOM), -MAX_ZOOM);
+          continuousZoom.y = Math.max(Math.min(continuousZoom.y + zoomDelta, MAX_ZOOM), -MAX_ZOOM);
 
-          if (Math.abs(newZoomX) > MAX_ZOOM) {
-            updateZoom = false;
-          }
+          const movingNegative = zoomDelta < 0;
 
-          if (Math.abs(newZoomY) > MAX_ZOOM) {
-            updateZoom = false;
-          }
+          const snappedZoomX = snapToStep(continuousZoom.x, ZOOM_STEP);
+          const snappedZoomY = snapToStep(continuousZoom.y, ZOOM_STEP);
 
-          if (updateZoom === false) {
-            newZoomX = oldZoom.x;
-            newZoomY = oldZoom.y;
+          const nudged = preventBothZero(snappedZoomX, snappedZoomY, ZOOM_STEP, movingNegative);
+
+          if (nudged.x !== oldZoom.x || nudged.y !== oldZoom.y) {
+            newZoomX = nudged.x;
+            newZoomY = nudged.y;
+            updateZoom = true;
           }
         }
 
@@ -434,6 +476,10 @@ function releasePointer(event) {
   currentGesture = activePointers.size > 0
     ? computeGesture(activePointers)
     : null;
+
+  if (activePointers.size < 2) {
+    continuousZoom = null;
+  }
 }
 
 canvas.addEventListener('pointerup', releasePointer);
@@ -462,8 +508,11 @@ canvas.addEventListener('wheel', event => {
   const mouseY = (event.clientY - bounding.top) * scaleY;
 
   const oldZoom = ctx.zoom();
-  const newZoomX = oldZoom.x + amount;
-  const newZoomY = oldZoom.y + amount;
+
+  const nudged = preventBothZero(oldZoom.x + amount, oldZoom.y + amount, ZOOM_STEP, amount < 0);
+
+  const newZoomX = nudged.x;
+  const newZoomY = nudged.y;
 
   if (Math.abs(newZoomX) > MAX_ZOOM) {
     return;
@@ -521,11 +570,39 @@ reset.addEventListener('click', event => {
 });
 
 zoomX.addEventListener('input', event => {
-  ctx.setZoom(Number(zoomX.value), ctx.zoom().y);
+  const oldZoom = ctx.zoom();
+
+  let value = Number(zoomX.value);
+
+  const EPS = Math.max(ZOOM_STEP * 1e-6, 1e-9);
+  const otherIsZero = Math.abs(oldZoom.y) <= EPS;
+  const thisWouldBeZero = Math.abs(value) <= EPS;
+
+  if (thisWouldBeZero === true && otherIsZero === true) {
+    value = value < oldZoom.x ? -ZOOM_STEP : ZOOM_STEP;
+  }
+
+  ctx.setZoom(value, oldZoom.y);
+
+  zoomX.value = value.toFixed(2);
 });
 
 zoomY.addEventListener('input', event => {
-  ctx.setZoom(ctx.zoom().x, Number(zoomY.value));
+  const oldZoom = ctx.zoom();
+
+  let value = Number(zoomY.value);
+
+  const EPS = Math.max(ZOOM_STEP * 1e-6, 1e-9);
+  const otherIsZero = Math.abs(oldZoom.x) <= EPS;
+  const thisWouldBeZero = Math.abs(value) <= EPS;
+
+  if (thisWouldBeZero === true && otherIsZero === true) {
+    value = value < oldZoom.y ? -ZOOM_STEP : ZOOM_STEP;
+  }
+
+  ctx.setZoom(oldZoom.x, value);
+
+  zoomY.value = value.toFixed(2);
 });
 
 anchor.addEventListener('change', event => {
