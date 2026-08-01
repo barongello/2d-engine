@@ -190,8 +190,18 @@ class Context {
 
       const rotRad = this.#rotation * Math.PI / 180;
 
+      const signOrDefault = value => {
+        const s = Math.sign(value);
+        return s === 0 ? 1 : s;
+      };
+
       const signX = Math.sign(zoom.x);
       const signY = Math.sign(zoom.y);
+
+      const baseXDirX = Math.cos(rotRad);
+      const baseXDirY = Math.sin(rotRad);
+      const baseYDirX = -Math.sin(rotRad);
+      const baseYDirY = Math.cos(rotRad);
 
       const xAxisBase = transform(Matrix.newFromArray([[-extent], [0], [1]]));
       const xAxisFar = transform(Matrix.newFromArray([[extent], [0], [1]]));
@@ -201,8 +211,8 @@ class Context {
       let xDirY = 0;
 
       if (signX !== 0) {
-        xDirX = Math.cos(rotRad) * signX;
-        xDirY = Math.sin(rotRad) * signX;
+        xDirX = baseXDirX * signX;
+        xDirY = baseXDirY * signX;
 
         xArrowTip = this.#intersectLineRect(
           originScreen.get(0, 0), originScreen.get(1, 0),
@@ -211,11 +221,15 @@ class Context {
         );
       }
 
+      const xSignYForLabel = signOrDefault(zoom.y);
+
       const xAxis = {
         x1: xAxisBase.get(0, 0), y1: xAxisBase.get(1, 0),
         x2: xAxisFar.get(0, 0), y2: xAxisFar.get(1, 0),
         arrowTip: xArrowTip,
         dirX: xDirX, dirY: xDirY,
+        labelPerpX: -baseYDirX * xSignYForLabel,
+        labelPerpY: -baseYDirY * xSignYForLabel,
         color: '#ff5555',
         label: 'X'
       };
@@ -228,8 +242,8 @@ class Context {
       let yDirY = 0;
 
       if (signY !== 0) {
-        yDirX = -Math.sin(rotRad) * signY;
-        yDirY = Math.cos(rotRad) * signY;
+        yDirX = baseYDirX * signY;
+        yDirY = baseYDirY * signY;
 
         yArrowTip = this.#intersectLineRect(
           originScreen.get(0, 0), originScreen.get(1, 0),
@@ -238,11 +252,15 @@ class Context {
         );
       }
 
+      const ySignXForLabel = signOrDefault(zoom.x);
+
       const yAxis = {
         x1: yAxisBase.get(0, 0), y1: yAxisBase.get(1, 0),
         x2: yAxisFar.get(0, 0), y2: yAxisFar.get(1, 0),
         arrowTip: yArrowTip,
         dirX: yDirX, dirY: yDirY,
+        labelPerpX: -baseXDirX * ySignXForLabel,
+        labelPerpY: -baseXDirY * ySignXForLabel,
         color: '#55ff55',
         label: 'Y'
       };
@@ -251,7 +269,7 @@ class Context {
     return { verticalLines, horizontalLines, xAxis, yAxis };
   }
 
-  #drawAxis(axis, rotateSign) {
+  #drawAxis(axis) {
     this.#ctx.strokeStyle = axis.color;
 
     this.#ctx.beginPath();
@@ -263,7 +281,7 @@ class Context {
       return;
     }
 
-    const wingAngle = 45 * Math.PI / 180;
+    const wingAngle = 25 * Math.PI / 180;
     const arrowSize = 12;
     const tipAngle = Math.atan2(axis.dirY, axis.dirX);
 
@@ -294,13 +312,10 @@ class Context {
     const halfH = 8;
     const padding = 4;
 
-    const perpX = rotateSign * -axis.dirY;
-    const perpY = rotateSign * axis.dirX;
-
     const labelOffset = 16;
 
-    let labelX = tipX + perpX * labelOffset;
-    let labelY = tipY + perpY * labelOffset;
+    let labelX = tipX + axis.labelPerpX * labelOffset;
+    let labelY = tipY + axis.labelPerpY * labelOffset;
 
     labelX = Math.min(Math.max(labelX, halfW + padding), this.#width - halfW - padding);
     labelY = Math.min(Math.max(labelY, halfH + padding), this.#height - halfH - padding);
@@ -752,8 +767,8 @@ class Context {
 
     this.#ctx.lineWidth = 2;
 
-    this.#drawAxis(xAxis, -1);
-    this.#drawAxis(yAxis, 1);
+    this.#drawAxis(xAxis);
+    this.#drawAxis(yAxis);
   }
 
   drawVector(vector) {
