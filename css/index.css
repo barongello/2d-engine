@@ -38,7 +38,7 @@ canvas {
   margin-top: 5px;
 }
 
-#info-frame-controls, #zoom-controls {
+#info-frame-controls, #zoom-anchor-controls {
   display: flex;
   flex-direction: row;
   column-gap: 10px;
@@ -49,12 +49,15 @@ button {
   padding: 5px;
 }
 
+select {
+  padding: 5px;
+}
+
 #transformation-order-container {
   margin-top: 5px;
 }
 
 #transformation-order {
-  padding: 5px;
   margin-top: 5px;
   display: block;
   width: 100%;

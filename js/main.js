@@ -14,6 +14,7 @@ const nextFrame = document.getElementById('next-frame');
 const reset = document.getElementById('reset');
 const zoomX = document.getElementById('zoom-x');
 const zoomY = document.getElementById('zoom-y');
+const anchor = document.getElementById('anchor');
 const transformationOrder = document.getElementById('transformation-order');
 
 mainContainer.style.width = `${CANVAS_WIDTH}px`;
@@ -525,6 +526,53 @@ zoomX.addEventListener('input', event => {
 
 zoomY.addEventListener('input', event => {
   ctx.setZoom(ctx.zoom().x, Number(zoomY.value));
+});
+
+anchor.addEventListener('change', event => {
+  const option = Number(anchor.value);
+
+  let newAnchor = ANCHORS.MIDDLE_CENTER;
+
+  switch (option) {
+    case 0:
+      newAnchor = ANCHORS.TOP_LEFT;
+      break;
+    case 1:
+      newAnchor = ANCHORS.TOP_CENTER;
+      break;
+    case 2:
+      newAnchor = ANCHORS.TOP_RIGHT;
+      break;
+    case 3:
+      newAnchor = ANCHORS.MIDDLE_LEFT;
+      break;
+    case 4:
+      newAnchor = ANCHORS.MIDDLE_CENTER;
+      break;
+    case 5:
+      newAnchor = ANCHORS.MIDDLE_RIGHT;
+      break;
+    case 6:
+      newAnchor = ANCHORS.BOTTOM_LEFT;
+      break;
+    case 7:
+      newAnchor = ANCHORS.BOTTOM_CENTER;
+      break;
+    case 8:
+      newAnchor = ANCHORS.BOTTOM_RIGHT;
+      break;
+    default:
+      newAnchor = ANCHORS.MIDDLE_CENTER;
+      break;
+  }
+
+  rectangle1.setAnchor(newAnchor);
+  rectangle2.setAnchor(newAnchor);
+  rectangle3.setAnchor(newAnchor);
+  rectangle4.setAnchor(newAnchor);
+  rectangle5.setAnchor(newAnchor);
+
+  star1.setAnchor(newAnchor);
 });
 
 transformationOrder.addEventListener('change', event => {
