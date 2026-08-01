@@ -263,7 +263,7 @@ class Context {
       return;
     }
 
-    const wingAngle = 25 * Math.PI / 180;
+    const wingAngle = 45 * Math.PI / 180;
     const arrowSize = 12;
     const tipAngle = Math.atan2(axis.dirY, axis.dirX);
 
