@@ -620,7 +620,7 @@ class Context {
       let rows = '';
 
       for (let i = dump.childElementCount; i < this.#logs.length; ++i) {
-        rows += `<div class="row" id="dump-row-${i}">`;
+        rows += `<div class="row"">`;
           rows += `<div class="spacer" id="dump-spacer-${i}"></div>`;
           rows += `<div class="content">`;
             rows += `<div class="reason" id="dump-reason-${i}"></div>`;

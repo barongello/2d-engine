@@ -18,7 +18,7 @@ const zoomY = document.getElementById('zoom-y');
 const anchors = document.getElementById('anchors');
 const transformationOrder = document.getElementById('transformation-order');
 
-mainContainer.style.width = `${CANVAS_WIDTH}px`;
+mainContainer.style.maxWidth = `${CANVAS_WIDTH}px`;
 
 zoomX.setAttribute('min', (-MAX_ZOOM).toFixed(2));
 zoomX.setAttribute('max', MAX_ZOOM.toFixed(2));
