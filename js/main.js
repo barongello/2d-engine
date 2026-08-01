@@ -15,7 +15,7 @@ const nextFrame = document.getElementById('next-frame');
 const reset = document.getElementById('reset');
 const zoomX = document.getElementById('zoom-x');
 const zoomY = document.getElementById('zoom-y');
-const anchor = document.getElementById('anchor');
+const anchors = document.getElementById('anchors');
 const transformationOrder = document.getElementById('transformation-order');
 
 mainContainer.style.width = `${CANVAS_WIDTH}px`;
@@ -605,8 +605,8 @@ zoomY.addEventListener('input', event => {
   zoomY.value = value.toFixed(2);
 });
 
-anchor.addEventListener('change', event => {
-  const option = Number(anchor.value);
+anchors.addEventListener('change', event => {
+  const option = Number(anchors.value);
 
   let newAnchor = ANCHORS.MIDDLE_CENTER;
 
