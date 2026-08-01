@@ -92,8 +92,8 @@ To make every order directly comparable, we use the same object and the same tra
 
 For each order we check two things:
 
-1. Where does the object's center end up? ( should be $(100,\ 0)$ )
-2. Is the shape still a proper rectangle? (checked via the dot product between two adjacent edges at corner $(1,\ 1)$ - a right angle gives a dot product of $0$)
+1. Where does the object's center end up? ( Should be $(100,\ 0)$ )
+2. Is the shape still a proper rectangle? (Checked via the dot product between two adjacent edges at corner $(1,\ 1)$, a right angle gives a dot product of $0$)
 
 ### TRS - correct order
 
@@ -141,6 +141,10 @@ Matrix product: $M = T \cdot S \cdot R$
 
 Apply order: $R \to S \to T$ (rotation happens before scale)
 
+$$
+\vec{v}_{tsr} = T \cdot (S \cdot (R \cdot \vec{v}))
+$$
+
 Center check:
 
 $$
@@ -180,6 +184,10 @@ Matrix product: $M = R \cdot T \cdot S$
 
 Apply order: $S \to T \to R$ (translation happens before the final rotation)
 
+$$
+\vec{v}_{rts} = R \cdot (T \cdot (S \cdot \vec{v}))
+$$
+
 Center check:
 
 $$
@@ -207,6 +215,10 @@ Matrix product: $M = R \cdot S \cdot T$
 
 Apply order: $T \to S \to R$ (translation happens first, then gets caught up in the scale too)
 
+$$
+\vec{v}_{rst} = R \cdot (S \cdot (T \cdot \vec{v}))
+$$
+
 Center check:
 
 $$
@@ -230,6 +242,10 @@ Result: shape is preserved (still a proper rectangle, $S$ still comes before $R$
 Matrix product: $M = S \cdot T \cdot R$
 
 Apply order: $R \to T \to S$ (rotation first [shears later], and translation is caught by the final scale)
+
+$$
+\vec{v}_{str} = S \cdot (T \cdot (R \cdot \vec{v}))
+$$
 
 Center check:
 
@@ -256,6 +272,10 @@ Result: the worst of both worlds, the object is both in the wrong place ( $(200,
 Matrix product: $M = S \cdot R \cdot T$
 
 Apply order: $T \to R \to S$ (translation first, then rotation, then scale)
+
+$$
+\vec{v}_{srt} = S \cdot (R \cdot (T \cdot \vec{v}))
+$$
 
 Center check:
 
