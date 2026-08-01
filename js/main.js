@@ -102,7 +102,7 @@ function updateFrame(dt) {
 
   star1.setScale(star1Scale, star1Scale);
 
-  const rectangle5Scale = Math.sin(angle * 0.35);
+  const rectangle5Scale = Math.sin(Math.PI * 0.5 + angle * 0.35);
 
   rectangle5.setScale(rectangle5Scale * 2, rectangle5Scale);
 
