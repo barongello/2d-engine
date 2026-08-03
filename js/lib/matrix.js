@@ -308,6 +308,48 @@ class Matrix {
     return newMatrix;
   }
 
+  static multiplyMatricesInto(out, matrixA, matrixB) {
+    if (matrixA instanceof Matrix === false) {
+      console.error('Matrix A is invalid');
+      return out;
+    }
+
+    if (matrixB instanceof Matrix === false) {
+      console.error('Matrix B is invalid');
+      return out;
+    }
+
+    const aCols = matrixA.cols();
+    const bRows = matrixB.rows();
+
+    if (aCols !== bRows) {
+      console.error(`Matrix A has ${aCols} cols and matrix B has ${bRows} rows`);
+      return out;
+    }
+
+    const aRows = matrixA.rows();
+    const bCols = matrixB.cols();
+
+    if (out.rows() !== aRows || out.cols() !== bCols) {
+      console.error(`Output matrix has wrong shape: expected ${aRows}x${bCols}, got ${out.rows()}x${out.cols()}`);
+      return out;
+    }
+
+    for (let aRow = 0; aRow < aRows; ++aRow) {
+      for (let bCol = 0; bCol < bCols; ++bCol) {
+        let sum = 0;
+
+        for (let i = 0; i < aCols; ++i) {
+          sum += matrixA.get(aRow, i) * matrixB.get(i, bCol);
+        }
+
+        out.set(aRow, bCol, sum);
+      }
+    }
+
+    return out;
+  }
+
   constructor(rows, cols) {
     if (isValidInteger(rows) === false || rows < 1) {
       rows = 1;
@@ -760,5 +802,79 @@ class Matrix {
     this.copyFromMatrix(newMatrix);
 
     return this;
+  }
+}
+
+class MatrixPool {
+  static #pools = new Map();
+  static #checkedOut = new WeakSet();
+
+  static #keyFor(rows, cols) {
+    return `${rows}x${cols}`;
+  }
+
+  static #getOrCreatePool(rows, cols) {
+    const key = MatrixPool.#keyFor(rows, cols);
+
+    let pool = MatrixPool.#pools.get(key);
+
+    if (pool === undefined) {
+      pool = { available: [], created: 0 };
+
+      MatrixPool.#pools.set(key, pool);
+    }
+
+    return pool;
+  }
+
+  static acquire(rows, cols) {
+    const pool = MatrixPool.#getOrCreatePool(rows, cols);
+
+    let matrix;
+
+    if (pool.available.length > 0) {
+      matrix = pool.available.pop();
+    }
+    else {
+      matrix = Matrix.new(rows, cols);
+
+      ++pool.created;
+    }
+
+    MatrixPool.#checkedOut.add(matrix);
+
+    return matrix;
+  }
+
+  static acquire3x3() {
+    return MatrixPool.acquire(3, 3);
+  }
+
+  static acquireVector3() {
+    return MatrixPool.acquire(3, 1);
+  }
+
+  static release(matrix) {
+    if (MatrixPool.#checkedOut.has(matrix) === false) {
+      console.error('Releasing a matrix that was not checked out (double release or foreign matrix)');
+
+      return;
+    }
+
+    MatrixPool.#checkedOut.delete(matrix);
+
+    const pool = MatrixPool.#getOrCreatePool(matrix.rows(), matrix.cols());
+
+    pool.available.push(matrix);
+  }
+
+  static stats() {
+    const result = {};
+
+    for (const [key, pool] of MatrixPool.#pools.entries()) {
+      result[key] = { created: pool.created, availableNow: pool.available.length };
+    }
+
+    return result;
   }
 }

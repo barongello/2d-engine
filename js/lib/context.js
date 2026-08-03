@@ -47,15 +47,22 @@ class Context {
   }
 
   #applyMatrices(matrices, vector) {
-    let newVector = vector.clone();
+    let current = MatrixPool.acquireVector3();
+
+    current.copyFromMatrix(vector);
 
     for (let i = matrices.length - 1; i >= 0; --i) {
       const matrix = matrices[i];
+      const next = MatrixPool.acquireVector3();
 
-      newVector = Matrix.multiplyMatrices(matrix, newVector);
+      Matrix.multiplyMatricesInto(next, matrix, current);
+
+      MatrixPool.release(current);
+
+      current = next;
     }
 
-    return newVector;
+    return current;
   }
 
   #matrixForKey(key) {
@@ -71,34 +78,57 @@ class Context {
     return Matrix.newIdentity(3);
   }
 
-  #composeTransformationMatrix(orderKeys) {
+  #composeTransformationMatrix(orderKeys, out) {
     if (orderKeys.length === 0) {
-      return Matrix.newIdentity(3);
+      out.makeIdentity();
+
+      return out;
     }
 
     const matrices = orderKeys.map(key => this.#matrixForKey(key));
 
     if (matrices.length === 1) {
-      return matrices[0].clone();
+      out.copyFromMatrix(matrices[0]);
+      return out;
     }
 
-    let newMatrix = matrices[matrices.length - 1];
+    let scratchA = MatrixPool.acquire3x3();
+    let scratchB = MatrixPool.acquire3x3();
+
+    scratchA.copyFromMatrix(matrices[matrices.length - 1]);
 
     for (let i = matrices.length - 2; i >= 0; --i) {
       const matrix = matrices[i];
 
-      newMatrix = Matrix.multiplyMatrices(matrix, newMatrix);
+      Matrix.multiplyMatricesInto(scratchB, matrix, scratchA);
+
+      const temp = scratchA;
+
+      scratchA = scratchB;
+      scratchB = temp;
     }
 
-    return newMatrix;
+    out.copyFromMatrix(scratchA);
+
+    MatrixPool.release(scratchA);
+    MatrixPool.release(scratchB);
+
+    return out;
   }
 
   #updateTransformationMatrix() {
-    const newTransformationMatrix = this.#composeTransformationMatrix(this.#transformationMatrixOrder);
+    const localScratch = MatrixPool.acquire3x3();
 
-    this.#transformationMatrix.copyFromMatrix(
-      Matrix.multiplyMatrices(this.#base, newTransformationMatrix)
-    );
+    this.#composeTransformationMatrix(this.#transformationMatrixOrder, localScratch);
+
+    const combined = MatrixPool.acquire3x3();
+
+    Matrix.multiplyMatricesInto(combined, this.#base, localScratch);
+
+    this.#transformationMatrix.copyFromMatrix(combined);
+
+    MatrixPool.release(localScratch);
+    MatrixPool.release(combined);
   }
 
   #intersectLineRect(ox, oy, dx, dy, minX, minY, maxX, maxY) {
@@ -396,6 +426,14 @@ class Context {
     return {
       ...this.#origin
     };
+  }
+
+  originX() {
+    return this.#origin.x;
+  }
+
+  originY() {
+    return this.#origin.y;
   }
 
   setOrigin(x, y) {
@@ -777,11 +815,16 @@ class Context {
   }
 
   drawVector(vector) {
+    let newVectorOrigin;
+    let newVector;
+    let newVectorTip1;
+    let newVectorTip2;
+
     this.save('Vector');
       this.translate(this.#origin.x, this.#origin.y);
 
-      const newVectorOrigin = this.#applyMatrices([this.#transformationMatrix], ORIGIN);
-      const newVector = this.#applyMatrices([this.#transformationMatrix], vector);
+      newVectorOrigin = this.#applyMatrices([this.#transformationMatrix], ORIGIN);
+      newVector = this.#applyMatrices([this.#transformationMatrix], vector);
 
       this.#ctx.lineWidth = 2 * Math.min(Math.abs(this.#zoom.x), Math.abs(this.#zoom.y));
       this.#ctx.strokeStyle = '#ffffff';
@@ -800,11 +843,11 @@ class Context {
       this.translate(vector.get(0, 0), vector.get(1, 0));
       this.rotate(45);
 
-      const newVectorTip1 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
+      newVectorTip1 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
 
       this.rotate(-90);
 
-      const newVectorTip2 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
+      newVectorTip2 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
     this.restore();
 
     this.#ctx.beginPath();
@@ -816,6 +859,11 @@ class Context {
       this.#ctx.moveTo(newVector.get(0, 0), newVector.get(1, 0));
       this.#ctx.lineTo(newVectorTip2.get(0, 0), newVectorTip2.get(1, 0));
     this.#ctx.stroke();
+
+    MatrixPool.release(newVectorOrigin);
+    MatrixPool.release(newVector);
+    MatrixPool.release(newVectorTip1);
+    MatrixPool.release(newVectorTip2);
   }
 
   drawChildren() {
@@ -846,6 +894,8 @@ class Context {
         else {
           this.#ctx.lineTo(newPoint.get(0, 0), newPoint.get(1, 0));
         }
+
+        MatrixPool.release(newPoint);
       }
     this.#ctx.closePath();
 

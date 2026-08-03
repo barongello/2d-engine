@@ -61,8 +61,8 @@ const rectangle5 = new Rectangle('Rectangle 5', -200, 100, 50, 50, '#ffffff', '#
 rectangle5.setScale(2, 1);
 ctx.addChild(rectangle5);
 
-const rectangle2BasePosition = rectangle2.position().x;
-const rectangle4BasePosition = rectangle4.position().x;
+const rectangle2BasePosition = rectangle2.positionX();
+const rectangle4BasePosition = rectangle4.positionX();
 
 const rectangle2Amplitude = rectangle2BasePosition * 0.15;
 const rectangle4Amplitude = rectangle4BasePosition / 7;
@@ -89,12 +89,12 @@ function updateFrame(dt) {
 
   rectangle2.setPosition(
     rectangle2BasePosition + Math.sin(angle) * rectangle2Amplitude,
-    rectangle2.position().y
+    rectangle2.positionY()
   );
 
   rectangle4.setPosition(
     rectangle4BasePosition + Math.sin(-angle) * 0.5 * rectangle4Amplitude,
-    rectangle4.position().y
+    rectangle4.positionY()
   );
 
   const star1Scale = Math.sin(angle * 0.2);
@@ -346,8 +346,8 @@ function handleRotateSample(sample, scaleX, scaleY, bounding) {
     mouseRotate.lastAngle = angle;
   }
 
-  vector1.set(0, 0, mouseX - ctx.origin().x);
-  vector1.set(1, 0, mouseY - ctx.origin().y);
+  vector1.set(0, 0, mouseX - ctx.originX());
+  vector1.set(1, 0, mouseY - ctx.originY());
 }
 
 function handleGestureSample(sample, scaleX, scaleY, bounding) {
@@ -370,8 +370,8 @@ function handleGestureSample(sample, scaleX, scaleY, bounding) {
       const dy = (current.cy - currentGesture.cy) * scaleY;
 
       ctx.setOrigin(
-        ctx.origin().x + dx,
-        ctx.origin().y + dy
+        ctx.originX() + dx,
+        ctx.originY() + dy
       );
 
       if (isMultiTouch === true) {
@@ -439,8 +439,8 @@ function handleGestureSample(sample, scaleX, scaleY, bounding) {
     referenceY = current.cy;
   }
 
-  vector1.set(0, 0, (referenceX - bounding.left) * scaleX - ctx.origin().x);
-  vector1.set(1, 0, (referenceY - bounding.top) * scaleY - ctx.origin().y);
+  vector1.set(0, 0, (referenceX - bounding.left) * scaleX - ctx.originX());
+  vector1.set(1, 0, (referenceY - bounding.top) * scaleY - ctx.originY());
 
   return zoomChanged;
 }
@@ -546,8 +546,8 @@ canvas.addEventListener('wheel', event => {
 
   updateZoomControls();
 
-  vector1.set(0, 0, mouseX - ctx.origin().x);
-  vector1.set(1, 0, mouseY - ctx.origin().y);
+  vector1.set(0, 0, mouseX - ctx.originX());
+  vector1.set(1, 0, mouseY - ctx.originY());
 });
 
 animationSpeed.addEventListener('input', event => {

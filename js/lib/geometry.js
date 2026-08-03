@@ -34,6 +34,14 @@ class BaseObject {
     };
   }
 
+  positionX() {
+    return this.#position.x;
+  }
+
+  positionY() {
+    return this.#position.y;
+  }
+
   setPosition(x, y) {
     if (isValidNumber(x) === false) {
       throw new Error('Invalid x');
@@ -63,6 +71,14 @@ class BaseObject {
     return {
       ...this.#scale
     };
+  }
+
+  scaleX() {
+    return this.#scale.x;
+  }
+
+  scaleY() {
+    return this.#scale.y;
   }
 
   setScale(x, y) {
@@ -118,9 +134,9 @@ class Container extends BaseObject {
     }
 
     ctx.save(this.name());
-      ctx.translate(this.position().x, this.position().y);
+      ctx.translate(this.positionX(), this.positionY());
       ctx.rotate(this.rotation());
-      ctx.scale(this.scale().x, this.scale().y);
+      ctx.scale(this.scaleX(), this.scaleY());
 
       for (const child of this.#children) {
         child.draw(ctx);
@@ -135,6 +151,15 @@ class Figure extends BaseObject {
   #strokeColor = '#ffffff';
   #fillColor = '#ff0000';
   #points = [];
+  #pointsScratch = [];
+
+  #releasePoints(points) {
+    for (const point of points) {
+      MatrixPool.release(point);
+    }
+
+    points.length = 0;
+  }
 
   constructor(name, x, y, strokeColor, fillColor) {
     super(name, x, y);
@@ -206,32 +231,34 @@ class Figure extends BaseObject {
     this.#fillColor = color;
   }
 
-  points() {
+  points(out) {
     let translateX = 0;
     let translateY = 0;
 
     if ((this.#anchor & ANCHOR_TOP) !== 0) {
-      translateY = this.#size.h * 0.5;
+      translateY += this.#size.h * 0.5;
     }
     else if ((this.#anchor & ANCHOR_BOTTOM) !== 0) {
-      translateY = -this.#size.h * 0.5;
+      translateY -= this.#size.h * 0.5;
     }
 
     if ((this.#anchor & ANCHOR_LEFT) !== 0) {
-      translateX = this.#size.w * 0.5;
+      translateX += this.#size.w * 0.5;
     }
     else if ((this.#anchor & ANCHOR_RIGHT) !== 0) {
-      translateX = -this.#size.w * 0.5;
+      translateX -= this.#size.w * 0.5;
     }
 
-    const translateMatrix = Matrix.newFromArray([[translateX], [translateY], [0]]);
+    const points = out || [];
 
-    const points = [];
+    points.length = 0;
 
     for (const point of this.#points) {
-      const newPoint = point.clone();
-      
-      newPoint.addMatrix(translateMatrix);
+      const newPoint = MatrixPool.acquireVector3();
+
+      newPoint.set(0, 0, point.get(0, 0) + translateX);
+      newPoint.set(1, 0, point.get(1, 0) + translateY);
+      newPoint.set(2, 0, point.get(2, 0));
 
       points.push(newPoint);
     }
@@ -248,16 +275,16 @@ class Figure extends BaseObject {
   }
 
   draw(ctx) {
-    ctx.save(this.name());
-      ctx.translate(this.position().x, this.position().y);
+    ctx.save();
+      ctx.translate(this.positionX(), this.positionY());
       ctx.rotate(this.rotation());
-      ctx.scale(this.scale().x, this.scale().y);
+      ctx.scale(this.scaleX(), this.scaleY());
 
-      ctx.drawPolygon(
-        this.points(),
-        this.strokeColor(),
-        this.fillColor()
-      );
+      const points = this.points(this.#pointsScratch);
+
+      ctx.drawPolygon(points, this.strokeColor(), this.fillColor());
+
+      this.#releasePoints(points);
     ctx.restore();
   }
 }
