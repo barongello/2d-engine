@@ -353,6 +353,7 @@ function handleRotateSample(sample, scaleX, scaleY, bounding) {
 function handleGestureSample(sample, scaleX, scaleY, bounding) {
   let referenceX = sample.clientX;
   let referenceY = sample.clientY;
+  let zoomChanged = false;
 
   if (activePointers.has(sample.pointerId) === true) {
     activePointers.set(sample.pointerId, { x: sample.clientX, y: sample.clientY });
@@ -424,7 +425,7 @@ function handleGestureSample(sample, scaleX, scaleY, bounding) {
         if (updateZoom === true) {
           ctx.setZoom(newZoomX, newZoomY);
 
-          updateZoomControls();
+          zoomChanged = true;
         }
 
         ctx.setRotation(newRotation);
@@ -440,24 +441,32 @@ function handleGestureSample(sample, scaleX, scaleY, bounding) {
 
   vector1.set(0, 0, (referenceX - bounding.left) * scaleX - ctx.origin().x);
   vector1.set(1, 0, (referenceY - bounding.top) * scaleY - ctx.origin().y);
+
+  return zoomChanged;
 }
 
 canvas.addEventListener('pointermove', event => {
   const { scaleX, scaleY, bounding } = getCanvasScale();
-  const samples = getEventSamples(event);
 
   const isRightMouseDrag = event.pointerType === 'mouse'
     && mouseRotate !== null
     && event.pointerId === mouseRotate.pointerId
     && (event.buttons & 2) !== 0;
 
-  for (const sample of samples) {
-    if (isRightMouseDrag === true) {
+  if (isRightMouseDrag === true) {
+    const samples = getEventSamples(event);
+
+    for (const sample of samples) {
       handleRotateSample(sample, scaleX, scaleY, bounding);
     }
-    else {
-      handleGestureSample(sample, scaleX, scaleY, bounding);
-    }
+
+    return;
+  }
+
+  const zoomChanged = handleGestureSample(event, scaleX, scaleY, bounding);
+
+  if (zoomChanged === true) {
+    updateZoomControls();
   }
 });
 

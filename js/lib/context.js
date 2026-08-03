@@ -223,6 +223,9 @@ class Context {
         );
       }
 
+      this.#ctx.font = `bold ${FONT_SIZE}px monospace`;
+
+      const xTextMetrics = this.#ctx.measureText('X');
       const xSignYForLabel = signOrDefault(zoom.y);
 
       const xAxis = {
@@ -232,6 +235,7 @@ class Context {
         dirX: xDirX, dirY: xDirY,
         labelPerpX: -baseYDirX * xSignYForLabel,
         labelPerpY: -baseYDirY * xSignYForLabel,
+        textHalfWidth: xTextMetrics.width * 0.5,
         color: '#ff5555',
         label: 'X'
       };
@@ -254,6 +258,7 @@ class Context {
         );
       }
 
+      const yTextMetrics = this.#ctx.measureText('Y');
       const ySignXForLabel = signOrDefault(zoom.x);
 
       const yAxis = {
@@ -263,6 +268,7 @@ class Context {
         dirX: yDirX, dirY: yDirY,
         labelPerpX: -baseXDirX * ySignXForLabel,
         labelPerpY: -baseXDirY * ySignXForLabel,
+        textHalfWidth: yTextMetrics.width * 0.5,
         color: '#55ff55',
         label: 'Y'
       };
@@ -309,8 +315,7 @@ class Context {
     this.#ctx.font = `bold ${FONT_SIZE}px monospace`;
     this.#ctx.fillStyle = axis.color;
 
-    const textMetrics = this.#ctx.measureText(axis.label);
-    const halfW = textMetrics.width * 0.5;
+    const halfW = axis.textHalfWidth;
     const halfH = FONT_SIZE * 0.5;
     const padding = FONT_SIZE * 0.25;
 
@@ -753,19 +758,17 @@ class Context {
     this.#ctx.lineWidth = 1;
     this.#ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
 
-    for (const line of verticalLines) {
-      this.#ctx.beginPath();
+    this.#ctx.beginPath();
+      for (const line of verticalLines) {
         this.#ctx.moveTo(line.x1, line.y1);
         this.#ctx.lineTo(line.x2, line.y2);
-      this.#ctx.stroke();
-    }
+      }
 
-    for (const line of horizontalLines) {
-      this.#ctx.beginPath();
+      for (const line of horizontalLines) {
         this.#ctx.moveTo(line.x1, line.y1);
         this.#ctx.lineTo(line.x2, line.y2);
-      this.#ctx.stroke();
-    }
+      }
+    this.#ctx.stroke();
 
     this.#ctx.lineWidth = 2;
 
