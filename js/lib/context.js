@@ -928,15 +928,24 @@ class Context {
     this.#ctx.fillStyle = '#ffffff';
 
     const texts = [
-      `FPS: ${fps.toFixed(2)}`,
-      `Speed: ${speed.toFixed(2)}`,
+      `Size: (${this.#canvas.width.toFixed(2)}, ${this.#canvas.height.toFixed(2)})`,
+      `Origin: (${this.#origin.x.toFixed(2)}, ${this.#origin.y.toFixed(2)})`,
+      `Rotation: ${this.#rotation.toFixed(2)}`,
+      `Zoom: (${this.#zoom.x.toFixed(2)}, ${this.#zoom.y.toFixed(2)})`,
       isValidNumber(gridStep) === true ? `Grid step: ${gridStep.toFixed(2)}` : null,
       isValidNumber(axesWing) === true ? `Axes wing angle: ${axesWing.toFixed(2)}°` : null,
       isValidNumber(vectorWing) === true ? `Vector wing angle: ${vectorWing.toFixed(2)}°` : null,
-      `Origin: (${this.#origin.x.toFixed(2)}, ${this.#origin.y.toFixed(2)})`,
-      `Rotation: ${this.#rotation.toFixed(2)}`,
-      `Zoom: (${this.#zoom.x.toFixed(2)}, ${this.#zoom.y.toFixed(2)})`
+      `Speed: ${speed.toFixed(2)}`,
+      `FPS: ${fps.toFixed(2)}`,
+      '',
+      'Matrix pool:'
     ];
+
+    const matrixPoolStats = MatrixPool.stats();
+
+    for (const [key, value] of Object.entries(matrixPoolStats)) {
+      texts.push(`  ${key} | C: ${value.created.toString().padStart(5, ' ')} A: ${value.availableNow.toString().padStart(5, ' ')}`);
+    }
 
     let line = 0;
 
