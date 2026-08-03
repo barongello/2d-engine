@@ -275,6 +275,10 @@ class Figure extends BaseObject {
   }
 
   draw(ctx) {
+    if (ctx instanceof Context === false) {
+      throw new Error('Invalid ctx');
+    }
+
     ctx.save();
       ctx.translate(this.positionX(), this.positionY());
       ctx.rotate(this.rotation());
