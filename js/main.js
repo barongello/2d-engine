@@ -130,7 +130,13 @@ function drawFrame() {
       ctx.drawVector(vector1, Number(vectorWing.value));
     }
 
-    ctx.drawInfo(speedMultiplier, fps);
+    ctx.drawInfo(
+      fps,
+      speedMultiplier,
+      gridCheckbox.checked === true ? Number(gridStep.value) : null,
+      axesCheckbox.checked === true ? Number(axesWing.value) : null,
+      vectorCheckbox.checked === true ? Number(vectorWing.value) : null
+    );
   ctx.drawEnd();
 }
 

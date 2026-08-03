@@ -923,14 +923,33 @@ class Context {
     this.#ctx.stroke();
   }
 
-  drawInfo(speed, fps) {
+  drawInfo(fps, speed, gridStep, axesWing, vectorWing) {
     this.#ctx.font = `${FONT_SIZE}px monospace`;
     this.#ctx.fillStyle = '#ffffff';
 
-    this.#ctx.fillText(`FPS: ${fps.toFixed(2)}`, 10, 20);
-    this.#ctx.fillText(`Speed: ${speed.toFixed(2)}`, 10, 20 + FONT_SIZE + LINE_GAP);
-    this.#ctx.fillText(`Origin: (${this.#origin.x.toFixed(2)}, ${this.#origin.y.toFixed(2)})`, 10, 20 + (FONT_SIZE + LINE_GAP) * 2);
-    this.#ctx.fillText(`Rotation: ${this.#rotation.toFixed(2)}`, 10, 20 + (FONT_SIZE + LINE_GAP) * 3);
-    this.#ctx.fillText(`Zoom: (${this.#zoom.x.toFixed(2)}, ${this.#zoom.y.toFixed(2)})`, 10, 20 + (FONT_SIZE + LINE_GAP) * 4);
+    const texts = [
+      `FPS: ${fps.toFixed(2)}`,
+      `Speed: ${speed.toFixed(2)}`,
+      isValidNumber(gridStep) === true ? `Grid step: ${gridStep.toFixed(2)}` : null,
+      isValidNumber(axesWing) === true ? `Axes wing angle: ${axesWing.toFixed(2)}°` : null,
+      isValidNumber(vectorWing) === true ? `Vector wing angle: ${vectorWing.toFixed(2)}°` : null,
+      `Origin: (${this.#origin.x.toFixed(2)}, ${this.#origin.y.toFixed(2)})`,
+      `Rotation: ${this.#rotation.toFixed(2)}`,
+      `Zoom: (${this.#zoom.x.toFixed(2)}, ${this.#zoom.y.toFixed(2)})`
+    ];
+
+    let line = 0;
+
+    for (let i = 0; i < texts.length; ++i) {
+      const text = texts[i];
+
+      if (typeof text !== 'string') {
+        continue;
+      }
+
+      this.#ctx.fillText(texts[i], 10, 20 + (FONT_SIZE + LINE_GAP) * line);
+
+      ++line;
+    }
   }
 }
