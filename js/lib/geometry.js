@@ -22,6 +22,7 @@ class BaseObject {
   #rotation = 0;
   #scale = { x: 1, y: 1 };
   #name = 'Object';
+  #visible = true;
 
   constructor(name, x, y) {
     this.setName(name);
@@ -105,6 +106,18 @@ class BaseObject {
 
     this.#name = name;
   }
+
+  visible() {
+    return this.#visible;
+  }
+
+  setVisible(visible) {
+    if (typeof visible !== 'boolean') {
+      throw new Error('Invalid visible');
+    }
+
+    this.#visible = visible;
+  }
 }
 
 class Container extends BaseObject {
@@ -131,6 +144,10 @@ class Container extends BaseObject {
   draw(ctx) {
     if (ctx instanceof Context === false) {
       throw new Error('Invalid ctx');
+    }
+
+    if (this.visible() === false) {
+      return;
     }
 
     ctx.save(this.name());
@@ -277,6 +294,10 @@ class Figure extends BaseObject {
   draw(ctx) {
     if (ctx instanceof Context === false) {
       throw new Error('Invalid ctx');
+    }
+
+    if (this.visible() === false) {
+      return;
     }
 
     ctx.save();
