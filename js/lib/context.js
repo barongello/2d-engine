@@ -188,30 +188,59 @@ class Context {
 
       const transform = point => this.#applyMatrices([this.#transformationMatrix], point);
 
+      const inputPoint = (x, y) => {
+        const p = MatrixPool.acquireVector3();
+
+        p.set(0, 0, x);
+        p.set(1, 0, y);
+        p.set(2, 0, 1);
+
+        return p;
+      };
+
       const verticalLines = [];
       const horizontalLines = [];
 
       for (let x = -extent; x <= extent; x += step) {
-        const p1 = transform(Matrix.newFromArray([[x], [-extent], [1]]));
-        const p2 = transform(Matrix.newFromArray([[x], [extent], [1]]));
+        const rawP1 = inputPoint(x, -extent);
+        const rawP2 = inputPoint(x, extent);
+
+        const p1 = transform(rawP1);
+        const p2 = transform(rawP2);
 
         verticalLines.push({
           x1: p1.get(0, 0), y1: p1.get(1, 0),
           x2: p2.get(0, 0), y2: p2.get(1, 0)
         });
+
+        MatrixPool.release(rawP1);
+        MatrixPool.release(rawP2);
+        MatrixPool.release(p1);
+        MatrixPool.release(p2);
       }
 
       for (let y = -extent; y <= extent; y += step) {
-        const p1 = transform(Matrix.newFromArray([[-extent], [y], [1]]));
-        const p2 = transform(Matrix.newFromArray([[extent], [y], [1]]));
+        const rawP1 = inputPoint(-extent, y);
+        const rawP2 = inputPoint(extent, y);
+
+        const p1 = transform(rawP1);
+        const p2 = transform(rawP2);
 
         horizontalLines.push({
           x1: p1.get(0, 0), y1: p1.get(1, 0),
           x2: p2.get(0, 0), y2: p2.get(1, 0)
         });
+
+        MatrixPool.release(rawP1);
+        MatrixPool.release(rawP2);
+        MatrixPool.release(p1);
+        MatrixPool.release(p2);
       }
 
-      const originScreen = transform(Matrix.newFromArray([[0], [0], [1]]));
+      const rawOrigin = inputPoint(0, 0);
+      const originScreen = transform(rawOrigin);
+
+      MatrixPool.release(rawOrigin);
 
       const rectBounds = {
         minX: 0,
@@ -235,8 +264,13 @@ class Context {
       const baseYDirX = -Math.sin(rotRad);
       const baseYDirY = Math.cos(rotRad);
 
-      const xAxisBase = transform(Matrix.newFromArray([[-extent], [0], [1]]));
-      const xAxisFar = transform(Matrix.newFromArray([[extent], [0], [1]]));
+      const rawXBase = inputPoint(-extent, 0);
+      const rawXFar = inputPoint(extent, 0);
+      const xAxisBase = transform(rawXBase);
+      const xAxisFar = transform(rawXFar);
+
+      MatrixPool.release(rawXBase);
+      MatrixPool.release(rawXFar);
 
       let xArrowTip = null;
       let xDirX = 0;
@@ -270,8 +304,13 @@ class Context {
         label: 'X'
       };
 
-      const yAxisBase = transform(Matrix.newFromArray([[0], [-extent], [1]]));
-      const yAxisFar = transform(Matrix.newFromArray([[0], [extent], [1]]));
+      const rawYBase = inputPoint(0, -extent);
+      const rawYFar = inputPoint(0, extent);
+      const yAxisBase = transform(rawYBase);
+      const yAxisFar = transform(rawYFar);
+
+      MatrixPool.release(rawYBase);
+      MatrixPool.release(rawYFar);
 
       let yArrowTip = null;
       let yDirX = 0;
@@ -302,6 +341,12 @@ class Context {
         color: '#55ff55',
         label: 'Y'
       };
+
+      MatrixPool.release(originScreen);
+      MatrixPool.release(xAxisBase);
+      MatrixPool.release(xAxisFar);
+      MatrixPool.release(yAxisBase);
+      MatrixPool.release(yAxisFar);
     this.restore();
 
     return { verticalLines, horizontalLines, xAxis, yAxis };
