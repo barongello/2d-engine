@@ -88,6 +88,7 @@ let angle = 0;
 
 function updateFrame(dt) {
   dt = Math.min(dt, MAX_FRAME_TIME);
+
   dt *= speedMultiplier;
 
   rectangle1.setRotation(rectangle1.rotation() + dt * -0.025);
