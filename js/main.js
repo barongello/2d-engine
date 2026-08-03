@@ -15,6 +15,18 @@ const reset = document.getElementById('reset');
 const zoomX = document.getElementById('zoom-x');
 const zoomY = document.getElementById('zoom-y');
 const anchors = document.getElementById('anchors');
+const gridCheckbox = document.getElementById('draw-grid');
+const gridStep = document.getElementById('draw-grid-step');
+const axesCheckbox = document.getElementById('draw-axes');
+const axesWing = document.getElementById('draw-axes-wing');
+const vectorCheckbox = document.getElementById('draw-vector');
+const vectorWing = document.getElementById('draw-vector-wing');
+const rectangle1Checkbox = document.getElementById('draw-rectangle-1');
+const rectangle2Checkbox = document.getElementById('draw-rectangle-2');
+const rectangle3Checkbox = document.getElementById('draw-rectangle-3');
+const rectangle4Checkbox = document.getElementById('draw-rectangle-4');
+const rectangle5Checkbox = document.getElementById('draw-rectangle-5');
+const star1Checkbox = document.getElementById('draw-star-1');
 const transformationOrder = document.getElementById('transformation-order');
 
 mainContainer.style.maxWidth = `${CANVAS_WIDTH}px`;
@@ -111,9 +123,13 @@ function updateFrame(dt) {
 function drawFrame() {
   ctx.drawBegin();
     ctx.drawBackground();
-    ctx.drawGrid();
+    ctx.drawGrid(Number(gridStep.value), Number(axesWing.value), gridCheckbox.checked, axesCheckbox.checked);
     ctx.drawChildren();
-    ctx.drawVector(vector1);
+
+    if (vectorCheckbox.checked === true) {
+      ctx.drawVector(vector1, Number(vectorWing.value));
+    }
+
     ctx.drawInfo(speedMultiplier, fps);
   ctx.drawEnd();
 }
@@ -656,6 +672,57 @@ anchors.addEventListener('change', event => {
   rectangle5.setAnchor(newAnchor);
 
   star1.setAnchor(newAnchor);
+});
+
+gridCheckbox.addEventListener('change', event => {
+  if (gridCheckbox.checked === true) {
+    gridStep.removeAttribute('disabled');
+  }
+  else {
+    gridStep.setAttribute('disabled', 'true');
+  }
+});
+
+axesCheckbox.addEventListener('change', event => {
+  if (axesCheckbox.checked === true) {
+    axesWing.removeAttribute('disabled');
+  }
+  else {
+    axesWing.setAttribute('disabled', 'true');
+  }
+});
+
+vectorCheckbox.addEventListener('change', event => {
+  if (vectorCheckbox.checked === true) {
+    vectorWing.removeAttribute('disabled');
+  }
+  else {
+    vectorWing.setAttribute('disabled', 'true');
+  }
+});
+
+rectangle1Checkbox.addEventListener('change', event => {
+  rectangle1.setVisible(rectangle1Checkbox.checked);
+});
+
+rectangle2Checkbox.addEventListener('change', event => {
+  rectangle2.setVisible(rectangle2Checkbox.checked);
+});
+
+rectangle3Checkbox.addEventListener('change', event => {
+  rectangle3.setVisible(rectangle3Checkbox.checked);
+});
+
+rectangle4Checkbox.addEventListener('change', event => {
+  rectangle4.setVisible(rectangle4Checkbox.checked);
+});
+
+rectangle5Checkbox.addEventListener('change', event => {
+  rectangle5.setVisible(rectangle5Checkbox.checked);
+});
+
+star1Checkbox.addEventListener('change', event => {
+  star1.setVisible(star1Checkbox.checked);
 });
 
 transformationOrder.addEventListener('change', event => {

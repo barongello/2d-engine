@@ -307,7 +307,7 @@ class Context {
     return { verticalLines, horizontalLines, xAxis, yAxis };
   }
 
-  #drawAxis(axis) {
+  #drawAxis(axis, wing) {
     this.#ctx.strokeStyle = axis.color;
 
     this.#ctx.beginPath();
@@ -319,7 +319,7 @@ class Context {
       return;
     }
 
-    const wingAngle = 25 * Math.PI / 180;
+    const wingAngle = wing * Math.PI / 180;
     const arrowSize = 12;
     const tipAngle = Math.atan2(axis.dirY, axis.dirX);
 
@@ -773,16 +773,32 @@ class Context {
     this.#ctx.fillRect(0, 0, this.#width, this.#height);
   }
 
-  drawGrid(step) {
+  drawGrid(step = 0, wing = 25, grid = true, axes = true) {
     if (isValidNumber(step) === false || step < 1) {
       step = 50;
+    }
+
+    if (isValidNumber(wing) === false) {
+      wing = 25;
+    }
+
+    if (typeof grid !== 'boolean') {
+      grid = true;
+    }
+
+    if (typeof axes !== 'boolean') {
+      axes = true;
+    }
+
+    if (grid === false && axes === false) {
+      return;
     }
 
     const zoom = this.#zoom;
     const rotation = this.#rotation;
     const origin = this.#origin;
 
-    const cacheKey = `${origin.x}|${origin.y}|${zoom.x}|${zoom.y}|${rotation}|${step}|${this.#width}|${this.#height}`;
+    const cacheKey = `${origin.x}|${origin.y}|${zoom.x}|${zoom.y}|${rotation}|${step}|${wing}|${this.#width}|${this.#height}`;
 
     if (this.#gridCache === null || this.#gridCache.key !== cacheKey) {
       this.#gridCache = {
@@ -793,28 +809,32 @@ class Context {
 
     const { verticalLines, horizontalLines, xAxis, yAxis } = this.#gridCache.lines;
 
-    this.#ctx.lineWidth = 1;
-    this.#ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+    if (grid === true) {
+      this.#ctx.lineWidth = 1;
+      this.#ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
 
-    this.#ctx.beginPath();
-      for (const line of verticalLines) {
-        this.#ctx.moveTo(line.x1, line.y1);
-        this.#ctx.lineTo(line.x2, line.y2);
-      }
+      this.#ctx.beginPath();
+        for (const line of verticalLines) {
+          this.#ctx.moveTo(line.x1, line.y1);
+          this.#ctx.lineTo(line.x2, line.y2);
+        }
 
-      for (const line of horizontalLines) {
-        this.#ctx.moveTo(line.x1, line.y1);
-        this.#ctx.lineTo(line.x2, line.y2);
-      }
-    this.#ctx.stroke();
+        for (const line of horizontalLines) {
+          this.#ctx.moveTo(line.x1, line.y1);
+          this.#ctx.lineTo(line.x2, line.y2);
+        }
+      this.#ctx.stroke();
+    }
 
-    this.#ctx.lineWidth = 2;
+    if (axes === true) {
+      this.#ctx.lineWidth = 2;
 
-    this.#drawAxis(xAxis);
-    this.#drawAxis(yAxis);
+      this.#drawAxis(xAxis, wing);
+      this.#drawAxis(yAxis, wing);
+    }
   }
 
-  drawVector(vector) {
+  drawVector(vector, wing = 45) {
     let newVectorOrigin;
     let newVector;
     let newVectorTip1;
@@ -841,11 +861,11 @@ class Context {
         .set(2, 0, 1);
 
       this.translate(vector.get(0, 0), vector.get(1, 0));
-      this.rotate(45);
+      this.rotate(wing);
 
       newVectorTip1 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
 
-      this.rotate(-90);
+      this.rotate(-wing * 2);
 
       newVectorTip2 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
     this.restore();

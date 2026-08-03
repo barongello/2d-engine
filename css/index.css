@@ -3,6 +3,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  font-family: monospace;
 }
 
 html, body {
@@ -54,6 +55,28 @@ canvas {
 #zoom-controls > input {
   flex: 1;
   width: 100%;
+}
+
+#draw-controls {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  max-height: 100px;
+  column-gap: 10px;
+
+  > div {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    column-gap: 10px;
+    width: 50%;
+    height: 20px;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    min-width: 50px;
+  }
 }
 
 button {
