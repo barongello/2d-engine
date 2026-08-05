@@ -300,7 +300,7 @@ class Figure extends BaseObject {
       return;
     }
 
-    ctx.save();
+    ctx.save(this.name());
       ctx.translate(this.positionX(), this.positionY());
       ctx.rotate(this.rotation());
       ctx.scale(this.scaleX(), this.scaleY());
