@@ -139,6 +139,7 @@ function drawFrame() {
       speedMultiplier,
       gridCheckbox.checked === true ? Number(gridStep.value) : null,
       axesCheckbox.checked === true ? Number(axesWing.value) : null,
+      vectorCheckbox.checked === true ? Number(vectorWingSize.value) : null,
       vectorCheckbox.checked === true ? Number(vectorWingAngle.value) : null
     );
   ctx.drawEnd();

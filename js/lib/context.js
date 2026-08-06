@@ -1065,7 +1065,7 @@ class Context {
     this.#ctx.stroke();
   }
 
-  drawInfo(fps, speed, gridStep, axesWing, vectorWing) {
+  drawInfo(fps, speed, gridStep, axesWingAngle, vectorWingSize, vectorWingAngle) {
     this.#ctx.font = `${FONT_SIZE}px monospace`;
     this.#ctx.fillStyle = '#ffffff';
 
@@ -1075,8 +1075,9 @@ class Context {
       `Rotation: ${this.#rotation.toFixed(2)}`,
       `Zoom: (${this.#zoom.x.toFixed(2)}, ${this.#zoom.y.toFixed(2)})`,
       isValidNumber(gridStep) === true ? `Grid step: ${gridStep.toFixed(2)}` : null,
-      isValidNumber(axesWing) === true ? `Axes wing angle: ${axesWing.toFixed(2)}°` : null,
-      isValidNumber(vectorWing) === true ? `Vector wing angle: ${vectorWing.toFixed(2)}°` : null,
+      isValidNumber(axesWingAngle) === true ? `Axes wing angle: ${axesWingAngle.toFixed(2)}°` : null,
+      isValidNumber(vectorWingSize) === true ? `Vector wing size: ${vectorWingSize.toFixed(2)}` : null,
+      isValidNumber(vectorWingAngle) === true ? `Vector wing angle: ${vectorWingAngle.toFixed(2)}°` : null,
       `Speed: ${speed.toFixed(2)}`,
       `FPS: ${fps.toFixed(2)}`,
       '',
