@@ -72,7 +72,9 @@ const star1 = new Star('Star 1', 200, -100, 5, 50, 25, '#ffffff', '#00ff00');
 ctx.addChild(star1);
 
 const rectangle5 = new Rectangle('Rectangle 5', -200, 100, 50, 50, '#ffffff', '#000000');
+
 rectangle5.setScale(2, 1);
+
 ctx.addChild(rectangle5);
 
 const rectangle2BasePosition = rectangle2.positionX();
