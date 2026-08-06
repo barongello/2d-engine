@@ -15,7 +15,7 @@ class Matrix {
     let determinant = 0;
 
     for (let j = 0; j < array.length; ++j) {
-      const subArray = array.slice(1).map(row => 
+      const subArray = array.slice(1).map(row =>
         row.filter((_, colIndex) => colIndex !== j)
       );
 
@@ -24,7 +24,7 @@ class Matrix {
       determinant += sign * array[0][j] * Matrix.#helperCalculateDeterminant(subArray);
     }
 
-    return determinant;    
+    return determinant;
   }
 
   static new(rows, cols) {
@@ -677,7 +677,7 @@ class Matrix {
 
       return this;
     }
-    
+
     for (let i = 0; i < this.#rows; ++i) {
       for (let j = 0; j < this.#cols; ++j) {
         const mElem = matrix.get(i, j);
@@ -819,7 +819,10 @@ class MatrixPool {
     let pool = MatrixPool.#pools.get(key);
 
     if (pool === undefined) {
-      pool = { available: [], created: 0 };
+      pool = {
+        available: [],
+        created: 0
+      };
 
       MatrixPool.#pools.set(key, pool);
     }

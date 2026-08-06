@@ -18,9 +18,15 @@ const ANCHORS = Object.freeze({
 });
 
 class BaseObject {
-  #position = { x: 0, y: 0 };
+  #position = {
+    x: 0,
+    y: 0
+  };
   #rotation = 0;
-  #scale = { x: 1, y: 1 };
+  #scale = {
+    x: 1,
+    y: 1
+  };
   #name = 'Object';
   #visible = true;
 
@@ -164,7 +170,10 @@ class Container extends BaseObject {
 
 class Figure extends BaseObject {
   #anchor = ANCHORS.MIDDLE_CENTER;
-  #size = { w: 0, h: 0 };
+  #size = {
+    w: 0,
+    h: 0
+  };
   #strokeColor = '#ffffff';
   #fillColor = '#ff0000';
   #points = [];
@@ -216,11 +225,11 @@ class Figure extends BaseObject {
   }
 
   setSize(w, h) {
-    if (isValidNumber(w) === false || w <= 0) {
+    if (isValidNumber(w) === false || w < 0) {
       throw new Error('Invalid w');
     }
 
-    if (isValidNumber(h) === false || h <= 0) {
+    if (isValidNumber(h) === false || h < 0) {
       throw new Error('Invalid h');
     }
 
@@ -252,7 +261,11 @@ class Figure extends BaseObject {
     this.#fillColor = color;
   }
 
-  points() {
+  rawPoints() {
+    return this.#points;
+  }
+
+  points(out = []) {
     let translateX = 0;
     let translateY = 0;
 
@@ -270,7 +283,9 @@ class Figure extends BaseObject {
       translateX -= this.#size.w * 0.5;
     }
 
-    const points = [];
+    const points = out;
+
+    points.length = 0;
 
     for (const point of this.#points) {
       const newPoint = MatrixPool.acquireVector3();
@@ -307,12 +322,146 @@ class Figure extends BaseObject {
       ctx.rotate(this.rotation());
       ctx.scale(this.scaleX(), this.scaleY());
 
-      this.#pointsScratch = this.points();
+      const points = this.points(this.#pointsScratch);
 
-      ctx.drawPolygon(this.#pointsScratch, this.strokeColor(), this.fillColor());
+      ctx.drawPolygon(points, this.strokeColor(), this.fillColor());
 
-      this.#releasePoints(this.#pointsScratch);
+      this.#releasePoints(points);
     ctx.restore();
+  }
+}
+
+class Vector extends Figure {
+  #pointsScratch = [];
+  #lineWidth = 2;
+  #wingSize = 0.15;
+  #wingAngle = 45;
+
+  constructor(name, x, y, w, h, strokeColor = '#ffffff') {
+    super(name, x, y, strokeColor, 'transparent');
+
+    super.setSize(Math.abs(w), Math.abs(h));
+
+    const origin = MatrixPool.acquireVector3();
+
+    origin.set(0, 0, 0);
+    origin.set(1, 0, 0);
+    origin.set(2, 0, 1);
+
+    this.addPoint(origin);
+
+    const tip = MatrixPool.acquireVector3();
+
+    tip.set(0, 0, w);
+    tip.set(1, 0, h);
+    tip.set(2, 0, 1);
+
+    this.addPoint(tip);
+  }
+
+  setAnchor(anchor) {
+    throw new Error('Vector does not support anchors; it is always anchored at its origin point');
+  }
+
+  setSize(w, h) {
+    super.setSize(Math.abs(w), Math.abs(h));
+
+    const points = this.rawPoints();
+    const tip = points[1];
+
+    tip.set(0, 0, w);
+    tip.set(1, 0, h);
+    tip.set(2, 0, 1);
+  }
+
+  lineWidth() {
+    return this.#lineWidth;
+  }
+
+  setLineWidth(width) {
+    if (isValidNumber(width) === false) {
+      throw new Error('Invalid width');
+    }
+
+    this.#lineWidth = width;
+  }
+
+  wingSize() {
+    return this.#wingSize;
+  }
+
+  setWingSize(size) {
+    if (isValidNumber(size) === false) {
+      throw new Error('Invalid size');
+    }
+
+    this.#wingSize = size;
+  }
+
+  wingAngle() {
+    return this.#wingAngle;
+  }
+
+  setWingAngle(angle) {
+    if (isValidNumber(angle) === false) {
+      throw new Error('Invalid angle');
+    }
+
+    this.#wingAngle = angle;
+  }
+
+  draw(ctx) {
+    if (ctx instanceof Context === false) {
+      throw new Error('Invalid ctx');
+    }
+
+    if (this.visible() === false) {
+      return;
+    }
+
+    const wingAngle = this.#wingAngle * Math.PI / 180;
+
+    const points = this.points(this.#pointsScratch);
+
+    const origin = points[0];
+    const tip = points[1];
+    const arrowSize = Math.hypot(tip.get(0, 0), tip.get(1, 0)) * this.#wingSize;
+    const tipAngle = Math.atan2(tip.get(1, 0), tip.get(0, 0));
+
+    const leftX = tip.get(0, 0) - arrowSize * Math.cos(tipAngle - wingAngle);
+    const leftY = tip.get(1, 0) - arrowSize * Math.sin(tipAngle - wingAngle);
+
+    const rightX = tip.get(0, 0) - arrowSize * Math.cos(tipAngle + wingAngle);
+    const rightY = tip.get(1, 0) - arrowSize * Math.sin(tipAngle + wingAngle);
+
+    const tipVector1 = MatrixPool.acquireVector3();
+
+    tipVector1.set(0, 0, leftX);
+    tipVector1.set(1, 0, leftY);
+    tipVector1.set(2, 0, 1);
+
+    const tipVector2 = MatrixPool.acquireVector3();
+
+    tipVector2.set(0, 0, rightX);
+    tipVector2.set(1, 0, rightY);
+    tipVector2.set(2, 0, 1);
+
+    ctx.save(this.name());
+      ctx.translate(this.positionX(), this.positionY());
+      ctx.rotate(this.rotation());
+      ctx.scale(this.scaleX(), this.scaleY());
+
+      ctx.drawLine(origin, tip, this.#lineWidth, this.strokeColor());
+      ctx.drawLine(tip, tipVector1, this.#lineWidth, this.strokeColor());
+      ctx.drawLine(tip, tipVector2, this.#lineWidth, this.strokeColor());
+    ctx.restore();
+
+    MatrixPool.release(tipVector1);
+    MatrixPool.release(tipVector2);
+
+    for (const point of points) {
+      MatrixPool.release(point);
+    }
   }
 }
 
@@ -322,10 +471,29 @@ class Rectangle extends Figure {
 
     this.setSize(w, h);
 
-    const topLeft = MatrixPool.acquireVector3().copyFromArray([[-w * 0.5], [-h * 0.5], [1]]);
-    const topRight = MatrixPool.acquireVector3().copyFromArray([[w * 0.5], [-h * 0.5], [1]]);
-    const bottomLeft = MatrixPool.acquireVector3().copyFromArray([[-w * 0.5], [h * 0.5], [1]]);
-    const bottomRight = MatrixPool.acquireVector3().copyFromArray([[w * 0.5], [h * 0.5], [1]]);
+    const topLeft = MatrixPool.acquireVector3();
+
+    topLeft.set(0, 0, -w * 0.5);
+    topLeft.set(1, 0, -h * 0.5);
+    topLeft.set(2, 0, 1);
+
+    const topRight = MatrixPool.acquireVector3();
+
+    topRight.set(0, 0, w * 0.5);
+    topRight.set(1, 0, -h * 0.5);
+    topRight.set(2, 0, 1);
+
+    const bottomLeft = MatrixPool.acquireVector3();
+
+    bottomLeft.set(0, 0, -w * 0.5);
+    bottomLeft.set(1, 0, h * 0.5);
+    bottomLeft.set(2, 0, 1);
+
+    const bottomRight = MatrixPool.acquireVector3();
+
+    bottomRight.set(0, 0, w * 0.5);
+    bottomRight.set(1, 0, h * 0.5);
+    bottomRight.set(2, 0, 1);
 
     // Add points clockwise
     this.addPoint(topLeft);
@@ -349,7 +517,7 @@ class Star extends Figure {
 
     if (isValidNumber(ir) === false || ir < 0) {
       throw new Error('Invalid ir');
-    } 
+    }
 
     let top = Infinity;
     let left = Infinity;
@@ -380,7 +548,11 @@ class Star extends Figure {
         bottom = y;
       }
 
-      const point = MatrixPool.acquireVector3().copyFromArray([[x], [y], [1]]);
+      const point = MatrixPool.acquireVector3();
+
+      point.set(0, 0, x);
+      point.set(1, 0, y);
+      point.set(2, 0, 1);
 
       this.addPoint(point);
     }

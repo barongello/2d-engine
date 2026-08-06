@@ -1,14 +1,24 @@
-const ORIGIN = MatrixPool.acquireVector3().copyFromArray([[0], [0], [1]]);
+const ORIGIN = MatrixPool.acquireVector3();
 const FONT_SIZE = 12;
 const LINE_GAP = 2;
+
+ORIGIN.set(0, 0, 0);
+ORIGIN.set(1, 0, 0);
+ORIGIN.set(2, 0, 1);
 
 class Context {
   #canvas = null;
   #ctx = null;
   #height = 0;
   #width = 0;
-  #origin = { x: 0, y: 0 };
-  #zoom = { x: 1, y: 1 };
+  #origin = {
+    x: 0,
+    y: 0
+  };
+  #zoom = {
+    x: 1,
+    y: 1
+  };
   #rotation = 0;
   #base = null;
   #R = null;
@@ -181,7 +191,10 @@ class Context {
 
     const bestT = Math.max(...candidates);
 
-    return { x: ox + bestT * dx, y: oy + bestT * dy };
+    return {
+      x: ox + bestT * dx,
+      y: oy + bestT * dy
+    };
   }
 
   #computeGridLines(step) {
@@ -206,7 +219,15 @@ class Context {
 
       const transform = point => this.#applyMatrices([this.#transformationMatrix], point);
 
-      const inputPoint = (x, y) => MatrixPool.acquireVector3().copyFromArray([[x], [y], [1]]);
+      const inputPoint = (x, y) => {
+        const p = MatrixPool.acquireVector3();
+
+        p.set(0, 0, x);
+        p.set(1, 0, y);
+        p.set(2, 0, 1);
+
+        return p;
+      };
 
       const verticalLines = [];
       const horizontalLines = [];
@@ -385,7 +406,12 @@ class Context {
       MatrixPool.release(yAxisFar);
     this.restore();
 
-    return { verticalLines, horizontalLines, xAxis, yAxis };
+    return {
+      verticalLines,
+      horizontalLines,
+      xAxis,
+      yAxis
+    };
   }
 
   #drawAxis(axis, wing) {
@@ -456,7 +482,7 @@ class Context {
 
     this.setWidth(width);
     this.setHeight(height);
-    
+
     this.#ctx = canvas.getContext('2d');
 
     this.#ctx.imageSmoothingEnabled = false;
@@ -748,7 +774,6 @@ class Context {
   }
 
   drawEnd() {
-    // return
     const dump = document.getElementById('dump');
 
     if (dump.childElementCount < this.#logs.length) {
@@ -948,7 +973,12 @@ class Context {
       };
     }
 
-    const { verticalLines, horizontalLines, xAxis, yAxis } = this.#gridCache.lines;
+    const {
+      verticalLines,
+      horizontalLines,
+      xAxis,
+      yAxis
+    } = this.#gridCache.lines;
 
     if (grid === true) {
       this.#ctx.lineWidth = 1;
@@ -975,67 +1005,6 @@ class Context {
     }
   }
 
-  drawVector(vector, wing = 45) {
-    let newVectorOrigin;
-    let newVector;
-    let newVectorTip1;
-    let newVectorTip2;
-
-    this.save('Vector');
-      this.translate(this.#origin.x, this.#origin.y);
-
-      newVectorOrigin = this.#applyMatrices([this.#transformationMatrix], ORIGIN);
-
-      this.#addPointLogEntry('Origin', ORIGIN, newVectorOrigin);
-
-      newVector = this.#applyMatrices([this.#transformationMatrix], vector);
-
-      this.#addPointLogEntry('End / Tip Line Start', vector, newVector);
-
-      this.#ctx.lineWidth = 2 * Math.min(Math.abs(this.#zoom.x), Math.abs(this.#zoom.y));
-      this.#ctx.strokeStyle = '#ffffff';
-
-      this.#ctx.beginPath();
-        this.#ctx.moveTo(newVectorOrigin.get(0, 0), newVectorOrigin.get(1, 0));
-        this.#ctx.lineTo(newVector.get(0, 0), newVector.get(1, 0));
-      this.#ctx.stroke();
-
-      const vectorTip = vector.clone();
-
-      vectorTip
-        .multiplyScalar(-0.15)
-        .set(2, 0, 1);
-
-      this.translate(vector.get(0, 0), vector.get(1, 0));
-      this.rotate(wing);
-
-      newVectorTip1 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
-
-      this.#addPointLogEntry('Tip Line 1 End', vectorTip, newVectorTip1);
-
-      this.rotate(-wing * 2);
-
-      newVectorTip2 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
-
-      this.#addPointLogEntry('Tip Line 2 End', vectorTip, newVectorTip2);
-    this.restore();
-
-    this.#ctx.beginPath();
-      this.#ctx.moveTo(newVector.get(0, 0), newVector.get(1, 0));
-      this.#ctx.lineTo(newVectorTip1.get(0, 0), newVectorTip1.get(1, 0));
-    this.#ctx.stroke();
-
-    this.#ctx.beginPath();
-      this.#ctx.moveTo(newVector.get(0, 0), newVector.get(1, 0));
-      this.#ctx.lineTo(newVectorTip2.get(0, 0), newVectorTip2.get(1, 0));
-    this.#ctx.stroke();
-
-    MatrixPool.release(newVectorOrigin);
-    MatrixPool.release(newVector);
-    MatrixPool.release(newVectorTip1);
-    MatrixPool.release(newVectorTip2);
-  }
-
   drawChildren() {
     this.save('Children');
       this.translate(this.#origin.x, this.#origin.y);
@@ -1048,10 +1017,26 @@ class Context {
     this.restore();
   }
 
-  drawPolygon(points, stroke = '#ffffff', fill = '#ff0000') {
+  drawLine(start, end, lineWidth = 1, strokeColor = '#ffffff') {
+    this.#ctx.lineWidth = lineWidth * Math.min(Math.abs(this.#zoom.x), Math.abs(this.#zoom.y));
+    this.#ctx.strokeStyle = strokeColor;
+
+    const newStart = this.#applyMatrices([this.#transformationMatrix], start);
+    const newEnd = this.#applyMatrices([this.#transformationMatrix], end);
+
+    this.#ctx.beginPath();
+      this.#ctx.moveTo(newStart.get(0, 0), newStart.get(1, 0));
+      this.#ctx.lineTo(newEnd.get(0, 0), newEnd.get(1, 0));
+    this.#ctx.stroke();
+
+    MatrixPool.release(newStart);
+    MatrixPool.release(newEnd);
+  }
+
+  drawPolygon(points, strokeColor = '#ffffff', fillColor = '#ff0000') {
     this.#ctx.lineWidth = Math.min(Math.abs(this.#zoom.x), Math.abs(this.#zoom.y));
-    this.#ctx.strokeStyle = stroke;
-    this.#ctx.fillStyle = fill;
+    this.#ctx.strokeStyle = strokeColor;
+    this.#ctx.fillStyle = fillColor;
 
     this.#ctx.beginPath();
       for (let i = 0; i < points.length; ++i) {
