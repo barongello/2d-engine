@@ -1,4 +1,4 @@
-const ORIGIN = Matrix.newFromArray([[0], [0], [1]]);
+const ORIGIN = MatrixPool.acquireVector3().copyFromArray([[0], [0], [1]]);
 const FONT_SIZE = 12;
 const LINE_GAP = 2;
 
@@ -93,7 +93,7 @@ class Context {
         return this.#S;
     }
 
-    return Matrix.newIdentity(3);
+    return MatrixPool.acquire3x3().makeIdentity();
   }
 
   #composeTransformationMatrix(orderKeys, out) {
@@ -206,15 +206,7 @@ class Context {
 
       const transform = point => this.#applyMatrices([this.#transformationMatrix], point);
 
-      const inputPoint = (x, y) => {
-        const p = MatrixPool.acquireVector3();
-
-        p.set(0, 0, x);
-        p.set(1, 0, y);
-        p.set(2, 0, 1);
-
-        return p;
-      };
+      const inputPoint = (x, y) => MatrixPool.acquireVector3().copyFromArray([[x], [y], [1]]);
 
       const verticalLines = [];
       const horizontalLines = [];
@@ -469,12 +461,12 @@ class Context {
 
     this.#ctx.imageSmoothingEnabled = false;
 
-    this.#base = Matrix.newIdentity(3);
-    this.#R = Matrix.newIdentity(3);
-    this.#S = Matrix.newIdentity(3);
-    this.#T = Matrix.newIdentity(3);
+    this.#base = MatrixPool.acquire3x3().makeIdentity();
+    this.#R = MatrixPool.acquire3x3().makeIdentity();
+    this.#S = MatrixPool.acquire3x3().makeIdentity();
+    this.#T = MatrixPool.acquire3x3().makeIdentity();
 
-    this.#transformationMatrix = Matrix.newSquare(3);
+    this.#transformationMatrix = MatrixPool.acquire3x3();
 
     this.setTransformationMatrixOrder(0);
   }
@@ -756,6 +748,7 @@ class Context {
   }
 
   drawEnd() {
+    // return
     const dump = document.getElementById('dump');
 
     if (dump.childElementCount < this.#logs.length) {
@@ -1103,7 +1096,7 @@ class Context {
     const matrixPoolStats = MatrixPool.stats();
 
     for (const [key, value] of Object.entries(matrixPoolStats)) {
-      texts.push(`  ${key} | C: ${value.created.toString().padStart(5, ' ')} A: ${value.availableNow.toString().padStart(5, ' ')}`);
+      texts.push(`  ${key} | C: ${value.created.toString().padStart(3, ' ')} U: ${value.using.toString().padStart(3, ' ')} A: ${value.availableNow.toString().padStart(3, ' ')}`);
     }
 
     let line = 0;

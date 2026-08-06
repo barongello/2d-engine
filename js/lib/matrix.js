@@ -872,7 +872,11 @@ class MatrixPool {
     const result = {};
 
     for (const [key, pool] of MatrixPool.#pools.entries()) {
-      result[key] = { created: pool.created, availableNow: pool.available.length };
+      result[key] = {
+        created: pool.created,
+        using: pool.created - pool.available.length,
+        availableNow: pool.available.length
+      };
     }
 
     return result;

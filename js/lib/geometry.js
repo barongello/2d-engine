@@ -193,6 +193,10 @@ class Figure extends BaseObject {
     this.#fillColor = fillColor;
   }
 
+  destroy() {
+    this.#releasePoints(this.#points);
+  }
+
   anchor() {
     return this.#anchor;
   }
@@ -248,7 +252,7 @@ class Figure extends BaseObject {
     this.#fillColor = color;
   }
 
-  points(out) {
+  points() {
     let translateX = 0;
     let translateY = 0;
 
@@ -266,9 +270,7 @@ class Figure extends BaseObject {
       translateX -= this.#size.w * 0.5;
     }
 
-    const points = out || [];
-
-    points.length = 0;
+    const points = [];
 
     for (const point of this.#points) {
       const newPoint = MatrixPool.acquireVector3();
@@ -305,11 +307,11 @@ class Figure extends BaseObject {
       ctx.rotate(this.rotation());
       ctx.scale(this.scaleX(), this.scaleY());
 
-      const points = this.points(this.#pointsScratch);
+      this.#pointsScratch = this.points();
 
-      ctx.drawPolygon(points, this.strokeColor(), this.fillColor());
+      ctx.drawPolygon(this.#pointsScratch, this.strokeColor(), this.fillColor());
 
-      this.#releasePoints(points);
+      this.#releasePoints(this.#pointsScratch);
     ctx.restore();
   }
 }
@@ -320,10 +322,10 @@ class Rectangle extends Figure {
 
     this.setSize(w, h);
 
-    const topLeft = Matrix.newFromArray([[-w * 0.5], [-h * 0.5], [1]]);
-    const topRight = Matrix.newFromArray([[w * 0.5], [-h * 0.5], [1]]);
-    const bottomLeft = Matrix.newFromArray([[-w * 0.5], [h * 0.5], [1]]);
-    const bottomRight = Matrix.newFromArray([[w * 0.5], [h * 0.5], [1]]);
+    const topLeft = MatrixPool.acquireVector3().copyFromArray([[-w * 0.5], [-h * 0.5], [1]]);
+    const topRight = MatrixPool.acquireVector3().copyFromArray([[w * 0.5], [-h * 0.5], [1]]);
+    const bottomLeft = MatrixPool.acquireVector3().copyFromArray([[-w * 0.5], [h * 0.5], [1]]);
+    const bottomRight = MatrixPool.acquireVector3().copyFromArray([[w * 0.5], [h * 0.5], [1]]);
 
     // Add points clockwise
     this.addPoint(topLeft);
@@ -378,7 +380,7 @@ class Star extends Figure {
         bottom = y;
       }
 
-      const point = Matrix.newFromArray([[x], [y], [1]]);
+      const point = MatrixPool.acquireVector3().copyFromArray([[x], [y], [1]]);
 
       this.addPoint(point);
     }
