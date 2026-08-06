@@ -12,99 +12,98 @@
   <div id="main-container">
     <canvas id="canvas"></canvas>
 
-    <div id="animation-data-container">
-      Speed:
+    Speed:
 
-      <div id="animation-controls">
-        <input type="range" id="animation-speed" min="0.1" max="10" step="0.1" value="1" />
+    <div id="animation-controls">
+      <input type="range" id="animation-speed" min="0.1" max="10" step="0.1" value="1" />
 
-        <div>
-          <input id="animating" type="checkbox" checked /> Animating
-        </div>
-
-        <button id="next-frame" disabled >Next frame</button>
-
-        <button id="reset">Reset</button>
+      <div>
+        <input id="animating" type="checkbox" checked /> Animating
       </div>
 
-      Zoom:
+      <button id="next-frame" disabled >Next frame</button>
 
-      <div id="zoom-controls">
-        X: <input id="zoom-x" type="range" min="-10" max="10" value="1" step="0.1" />
+      <button id="reset">Reset</button>
+    </div>
 
-        Y: <input id="zoom-y" type="range" min="-10" max="10" value="1" step="0.1" />
+    Zoom:
+
+    <div id="zoom-controls">
+      X: <input id="zoom-x" type="range" min="-10" max="10" value="1" step="0.1" />
+
+      Y: <input id="zoom-y" type="range" min="-10" max="10" value="1" step="0.1" />
+    </div>
+
+    <div id="anchors-controls">
+      Anchors:
+
+      <select id="anchors">
+        <option value="0">Top - Left</option>
+        <option value="1">Top - Center</option>
+        <option value="2">Top - Right</option>
+        <option value="3">Middle - Left</option>
+        <option value="4" selected>Middle - Center</option>
+        <option value="5">Middle - Right</option>
+        <option value="6">Bottom - Left</option>
+        <option value="7">Bottom - Center</option>
+        <option value="8">Bottom - Right</option>
+      </select>
+    </div>
+
+    <div id="draw-controls">
+      <div>
+        Visibility:
       </div>
 
-      <div id="anchors-controls">
-        Anchors:
+      <div>
+        <input id="draw-grid" type="checkbox" checked />
+        
+        Grid&nbsp;&nbsp;&nbsp;Step:
 
-        <select id="anchors">
-          <option value="0">Top - Left</option>
-          <option value="1">Top - Center</option>
-          <option value="2">Top - Right</option>
-          <option value="3">Middle - Left</option>
-          <option value="4" selected>Middle - Center</option>
-          <option value="5">Middle - Right</option>
-          <option value="6">Bottom - Left</option>
-          <option value="7">Bottom - Center</option>
-          <option value="8">Bottom - Right</option>
-        </select>
+        <input id="draw-grid-step" type="range" min="1" max="100" step="1" value="50" />
       </div>
 
-      <div id="draw-controls">
-        <div>
-          Visibility:
-        </div>
+      <div>
+        <input id="draw-axes" type="checkbox" checked />
 
-        <div>
-          <input id="draw-grid" type="checkbox" checked />
-          
-          Grid&nbsp;&nbsp;&nbsp;Step:
+        Axes&nbsp;&nbsp;&nbsp;Wing:
 
-          <input id="draw-grid-step" type="range" min="1" max="100" step="1" value="50" />
-        </div>
+        <input id="draw-axes-wing" type="range" min="0" max="180" step="1" value="25" />
+      </div>
 
-        <div>
-          <input id="draw-axes" type="checkbox" checked />
+      <div>
+        <input id="draw-vector" type="checkbox" checked />
 
-          Axes&nbsp;&nbsp;&nbsp;Wing:
+        Vector&nbsp;Wing:
 
-          <input id="draw-axes-wing" type="range" min="0" max="180" step="1" value="25" />
-        </div>
+        <input id="draw-vector-wing" type="range" min="0" max="180" step="1" value="25" />
+      </div>
 
-        <div>
-          <input id="draw-vector" type="checkbox" checked />
+      <div>
+        <input id="draw-rectangle-1" type="checkbox" checked /> Rectangle 1
+      </div>
 
-          Vector&nbsp;Wing:
+      <div>
+        <input id="draw-rectangle-2" type="checkbox" checked /> Rectangle 2
+      </div>
 
-          <input id="draw-vector-wing" type="range" min="0" max="180" step="1" value="25" />
-        </div>
+      <div>
+        <input id="draw-rectangle-3" type="checkbox" checked /> Rectangle 3
+      </div>
 
-        <div>
-          <input id="draw-rectangle-1" type="checkbox" checked /> Rectangle 1
-        </div>
+      <div>
+        <input id="draw-rectangle-4" type="checkbox" checked /> Rectangle 4
+      </div>
 
-        <div>
-          <input id="draw-rectangle-2" type="checkbox" checked /> Rectangle 2
-        </div>
+      <div>
+        <input id="draw-rectangle-5" type="checkbox" checked /> Rectangle 5
+      </div>
 
-        <div>
-          <input id="draw-rectangle-3" type="checkbox" checked /> Rectangle 3
-        </div>
-
-        <div>
-          <input id="draw-rectangle-4" type="checkbox" checked /> Rectangle 4
-        </div>
-
-        <div>
-          <input id="draw-rectangle-5" type="checkbox" checked /> Rectangle 5
-        </div>
-
-        <div>
-          <input id="draw-star-1" type="checkbox" checked /> Star 1
-        </div>
+      <div>
+        <input id="draw-star-1" type="checkbox" checked /> Star 1
       </div>
     </div>
+
 
     <div id="transformation-order-container">
       Order of transformations (apply from right to left):
@@ -117,6 +116,12 @@
         <option value="4">Scale, Translate, Rotate (Wrong: shape and position defects)</option>
         <option value="5">Scale, Rotate, Translate (Wrong: shape and position defects, more severe)</option>
       </select>
+    </div>
+
+    <div id="dump-controls">
+      <input id="dump-visible" type="checkbox" checked />
+
+      Dump
     </div>
   </div>
 

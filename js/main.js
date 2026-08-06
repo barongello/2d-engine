@@ -28,6 +28,8 @@ const rectangle4Checkbox = document.getElementById('draw-rectangle-4');
 const rectangle5Checkbox = document.getElementById('draw-rectangle-5');
 const star1Checkbox = document.getElementById('draw-star-1');
 const transformationOrder = document.getElementById('transformation-order');
+const dumpCheckbox = document.getElementById('dump-visible');
+const dumpContent = document.getElementById('dump');
 
 mainContainer.style.maxWidth = `${CANVAS_WIDTH}px`;
 
@@ -736,4 +738,13 @@ transformationOrder.addEventListener('change', event => {
   const option = Number(transformationOrder.value);
 
   ctx.setTransformationMatrixOrder(option);
+});
+
+dumpCheckbox.addEventListener('change', event => {
+  if (dumpCheckbox.checked === true) {
+    dumpContent.style.display = '';
+  }
+  else {
+    dumpContent.style.display = 'none';
+  }
 });
