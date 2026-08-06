@@ -186,7 +186,7 @@ class Context {
 
   #computeGridLines(step) {
     const zoom = this.#zoom;
-    const minZoom = Math.max(Math.min(Math.abs(zoom.x), Math.abs(zoom.y)), 0.001);
+    const minZoom = Math.max(Math.min(Math.abs(zoom.x), Math.abs(zoom.y)), ZOOM_STEP);
 
     const cornerDistances = [
       Math.hypot(this.#origin.x, this.#origin.y),
@@ -544,6 +544,14 @@ class Context {
     return {
       ...this.#zoom
     };
+  }
+
+  zoomX() {
+    return this.#zoom.x;
+  }
+
+  zoomY() {
+    return this.#zoom.y;
   }
 
   setZoom(x, y) {
