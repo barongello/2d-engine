@@ -632,10 +632,10 @@ class Context {
   save(scope = 'Unknown') {
     const historyEntry = {
       scope: this.#scope,
-      base: this.#base.clone(),
-      R: this.#R.clone(),
-      S: this.#S.clone(),
-      T: this.#T.clone()
+      base: MatrixPool.acquire3x3().copyFromMatrix(this.#base),
+      R: MatrixPool.acquire3x3().copyFromMatrix(this.#R),
+      S: MatrixPool.acquire3x3().copyFromMatrix(this.#S),
+      T: MatrixPool.acquire3x3().copyFromMatrix(this.#T)
     };
 
     this.#transformationMatrixHistory.push(historyEntry);
@@ -676,6 +676,11 @@ class Context {
     this.#R.copyFromMatrix(historyEntry.R);
     this.#S.copyFromMatrix(historyEntry.S);
     this.#T.copyFromMatrix(historyEntry.T);
+
+    MatrixPool.release(historyEntry.base);
+    MatrixPool.release(historyEntry.R);
+    MatrixPool.release(historyEntry.S);
+    MatrixPool.release(historyEntry.T);
 
     this.#updateTransformationMatrix();
 
