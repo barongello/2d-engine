@@ -34,6 +34,24 @@ class Context {
     this.#logCurrent = {};
   }
 
+  #addPointLogEntry(name, point, newPoint) {
+    this.#logCurrent.reason = `Point ${name}`;
+    this.#logCurrent.scope = this.#scope;
+    this.#logCurrent.level = this.#logLevel + 1;
+
+    const value = {
+      vector: point.dump(true),
+      newVector: newPoint.dump(true),
+      transformationMatrix: this.#transformationMatrix.dump(true)
+    };
+
+    this.#logCurrent.point = value;
+
+    this.#logs.push(this.#logCurrent);
+
+    this.#logCurrent = {};
+  }
+
   #updateLogEntry(key) {
     const value = {
       base: this.#base.dump(true),
@@ -201,6 +219,8 @@ class Context {
       const verticalLines = [];
       const horizontalLines = [];
 
+      let verticalLinesCount = 0;
+
       for (let x = -extent; x <= extent; x += step) {
         const rawP1 = inputPoint(x, -extent);
         const rawP2 = inputPoint(x, extent);
@@ -208,16 +228,25 @@ class Context {
         const p1 = transform(rawP1);
         const p2 = transform(rawP2);
 
+        this.#addPointLogEntry(`Vertical Line ${verticalLinesCount} Start`, rawP1, p1);
+        this.#addPointLogEntry(`Vertical Line ${verticalLinesCount} End`, rawP2, p2);
+
         verticalLines.push({
-          x1: p1.get(0, 0), y1: p1.get(1, 0),
-          x2: p2.get(0, 0), y2: p2.get(1, 0)
+          x1: p1.get(0, 0),
+          y1: p1.get(1, 0),
+          x2: p2.get(0, 0),
+          y2: p2.get(1, 0)
         });
 
         MatrixPool.release(rawP1);
         MatrixPool.release(rawP2);
         MatrixPool.release(p1);
         MatrixPool.release(p2);
+
+        ++verticalLinesCount;
       }
+
+      let horizontalLinesCount = 0;
 
       for (let y = -extent; y <= extent; y += step) {
         const rawP1 = inputPoint(-extent, y);
@@ -226,19 +255,28 @@ class Context {
         const p1 = transform(rawP1);
         const p2 = transform(rawP2);
 
+        this.#addPointLogEntry(`Horizontal Line ${horizontalLinesCount} Start`, rawP1, p1);
+        this.#addPointLogEntry(`Horizontal Line ${horizontalLinesCount} End`, rawP2, p2);
+
         horizontalLines.push({
-          x1: p1.get(0, 0), y1: p1.get(1, 0),
-          x2: p2.get(0, 0), y2: p2.get(1, 0)
+          x1: p1.get(0, 0),
+          y1: p1.get(1, 0),
+          x2: p2.get(0, 0),
+          y2: p2.get(1, 0)
         });
 
         MatrixPool.release(rawP1);
         MatrixPool.release(rawP2);
         MatrixPool.release(p1);
         MatrixPool.release(p2);
+
+        ++horizontalLinesCount;
       }
 
       const rawOrigin = inputPoint(0, 0);
       const originScreen = transform(rawOrigin);
+
+      this.#addPointLogEntry('Origin', rawOrigin, originScreen);
 
       MatrixPool.release(rawOrigin);
 
@@ -268,6 +306,9 @@ class Context {
       const rawXFar = inputPoint(extent, 0);
       const xAxisBase = transform(rawXBase);
       const xAxisFar = transform(rawXFar);
+
+      this.#addPointLogEntry('X Axis Start', rawXBase, xAxisBase);
+      this.#addPointLogEntry('X Axis End', rawXFar, xAxisFar);
 
       MatrixPool.release(rawXBase);
       MatrixPool.release(rawXFar);
@@ -308,6 +349,9 @@ class Context {
       const rawYFar = inputPoint(0, extent);
       const yAxisBase = transform(rawYBase);
       const yAxisFar = transform(rawYFar);
+
+      this.#addPointLogEntry('Y Axis Start', rawYBase, yAxisBase);
+      this.#addPointLogEntry('Y Axis End', rawYFar, yAxisFar);
 
       MatrixPool.release(rawYBase);
       MatrixPool.release(rawYFar);
@@ -714,50 +758,70 @@ class Context {
           rows += `<div class="spacer" id="dump-spacer-${i}"></div>`;
           rows += `<div class="content">`;
             rows += `<div class="reason" id="dump-reason-${i}"></div>`;
-            rows += '<div class="header">Before</div>';
-            rows += '<div class="content-base content-before">';
-              rows += '<div class="matrix-dump">';
-                rows += '<div class="matrix-dump-header">Base</div>';
-                rows += `<div class="matrix-dump-content"><pre id="dump-before-base-${i}"></pre></div>`;
-              rows += '</div>';
-              rows += '<div class="matrix-dump">';
-                rows += '<div class="matrix-dump-header">R</div>';
-                rows += `<div class="matrix-dump-content"><pre id="dump-before-r-${i}"></pre></div>`;
-              rows += '</div>';
-              rows += '<div class="matrix-dump">';
-                rows += '<div class="matrix-dump-header">S</div>';
-                rows += `<div class="matrix-dump-content"><pre id="dump-before-s-${i}"></pre></div>`;
-              rows += '</div>';
-              rows += '<div class="matrix-dump">';
-                rows += '<div class="matrix-dump-header">T</div>';
-                rows += `<div class="matrix-dump-content"><pre id="dump-before-t-${i}"></pre></div>`;
-              rows += '</div>';
-              rows += '<div class="matrix-dump">';
-                rows += '<div class="matrix-dump-header">Transformation</div>';
-                rows += `<div class="matrix-dump-content"><pre id="dump-before-transformation-${i}"></pre></div>`;
+            rows += `<div id="dump-content-before-${i}" class="dump-content">`;
+              rows += '<div class="header">Before</div>';
+              rows += '<div class="content-base">';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">Base</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-before-base-${i}"></pre></div>`;
+                rows += '</div>';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">R</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-before-r-${i}"></pre></div>`;
+                rows += '</div>';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">S</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-before-s-${i}"></pre></div>`;
+                rows += '</div>';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">T</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-before-t-${i}"></pre></div>`;
+                rows += '</div>';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">Transformation</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-before-transformation-${i}"></pre></div>`;
+                rows += '</div>';
               rows += '</div>';
             rows += '</div>';
-            rows += '<div class="header">After</div>';
-            rows += '<div class="content-base content-after">';
-              rows += '<div class="matrix-dump">';
-                rows += '<div class="matrix-dump-header">Base</div>';
-                rows += `<div class="matrix-dump-content"><pre id="dump-after-base-${i}"></pre></div>`;
+            rows += `<div id="dump-content-after-${i}" class="dump-content">`;
+              rows += '<div class="header">After</div>';
+              rows += '<div class="content-base">';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">Base</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-after-base-${i}"></pre></div>`;
+                rows += '</div>';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">R</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-after-r-${i}"></pre></div>`;
+                rows += '</div>';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">S</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-after-s-${i}"></pre></div>`;
+                rows += '</div>';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">T</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-after-t-${i}"></pre></div>`;
+                rows += '</div>';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">Transformation</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-after-transformation-${i}"></pre></div>`;
+                rows += '</div>';
               rows += '</div>';
-              rows += '<div class="matrix-dump">';
-                rows += '<div class="matrix-dump-header">R</div>';
-                rows += `<div class="matrix-dump-content"><pre id="dump-after-r-${i}"></pre></div>`;
-              rows += '</div>';
-              rows += '<div class="matrix-dump">';
-                rows += '<div class="matrix-dump-header">S</div>';
-                rows += `<div class="matrix-dump-content"><pre id="dump-after-s-${i}"></pre></div>`;
-              rows += '</div>';
-              rows += '<div class="matrix-dump">';
-                rows += '<div class="matrix-dump-header">T</div>';
-                rows += `<div class="matrix-dump-content"><pre id="dump-after-t-${i}"></pre></div>`;
-              rows += '</div>';
-              rows += '<div class="matrix-dump">';
-                rows += '<div class="matrix-dump-header">Transformation</div>';
-                rows += `<div class="matrix-dump-content"><pre id="dump-after-transformation-${i}"></pre></div>`;
+            rows += '</div>';
+            rows += `<div id="dump-content-point-${i}" class="dump-content">`;
+              rows += '<div class="content-base">';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">Transformation</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-point-transformation-${i}"></pre></div>`;
+                rows += '</div>';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">Point</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-point-vector-${i}"></pre></div>`;
+                rows += '</div>';
+                rows += '<div class="matrix-dump">';
+                  rows += '<div class="matrix-dump-header">Result</div>';
+                  rows += `<div class="matrix-dump-content"><pre id="dump-point-result-${i}"></pre></div>`;
+                rows += '</div>';
               rows += '</div>';
             rows += '</div>';
           rows += '</div>'
@@ -777,16 +841,22 @@ class Context {
 
       const spacer = document.getElementById(`dump-spacer-${i}`);
       const reason = document.getElementById(`dump-reason-${i}`);
+      const beforeContent = document.getElementById(`dump-content-before-${i}`);
       const beforeBase = document.getElementById(`dump-before-base-${i}`);
       const beforeR = document.getElementById(`dump-before-r-${i}`);
       const beforeS = document.getElementById(`dump-before-s-${i}`);
       const beforeT = document.getElementById(`dump-before-t-${i}`);
       const beforeTransformation = document.getElementById(`dump-before-transformation-${i}`);
+      const afterContent = document.getElementById(`dump-content-after-${i}`);
       const afterBase = document.getElementById(`dump-after-base-${i}`);
       const afterR = document.getElementById(`dump-after-r-${i}`);
       const afterS = document.getElementById(`dump-after-s-${i}`);
       const afterT = document.getElementById(`dump-after-t-${i}`);
       const afterTransformation = document.getElementById(`dump-after-transformation-${i}`);
+      const pointContent = document.getElementById(`dump-content-point-${i}`);
+      const pointTransformation = document.getElementById(`dump-point-transformation-${i}`);
+      const pointVector = document.getElementById(`dump-point-vector-${i}`);
+      const pointResult = document.getElementById(`dump-point-result-${i}`);
 
       let spacerContent = '';
 
@@ -798,17 +868,42 @@ class Context {
 
       reason.innerHTML = `${logEntry.reason} (${logEntry.scope})`;
 
-      beforeBase.innerHTML = logEntry.before.base;
-      beforeR.innerHTML = logEntry.before.R;
-      beforeS.innerHTML = logEntry.before.S;
-      beforeT.innerHTML = logEntry.before.T;
-      beforeTransformation.innerHTML = logEntry.before.transformationMatrix;
+      if (Object.prototype.hasOwnProperty.call(logEntry, 'before') === true) {
+        beforeContent.style.display = '';
 
-      afterBase.innerHTML = logEntry.after.base;
-      afterR.innerHTML = logEntry.after.R;
-      afterS.innerHTML = logEntry.after.S;
-      afterT.innerHTML = logEntry.after.T;
-      afterTransformation.innerHTML = logEntry.after.transformationMatrix;
+        beforeBase.innerHTML = logEntry.before.base;
+        beforeR.innerHTML = logEntry.before.R;
+        beforeS.innerHTML = logEntry.before.S;
+        beforeT.innerHTML = logEntry.before.T;
+        beforeTransformation.innerHTML = logEntry.before.transformationMatrix;
+      }
+      else {
+        beforeContent.style.display = 'none';
+      }
+
+      if (Object.prototype.hasOwnProperty.call(logEntry, 'after') === true) {
+        afterContent.style.display = '';
+
+        afterBase.innerHTML = logEntry.after.base;
+        afterR.innerHTML = logEntry.after.R;
+        afterS.innerHTML = logEntry.after.S;
+        afterT.innerHTML = logEntry.after.T;
+        afterTransformation.innerHTML = logEntry.after.transformationMatrix;
+      }
+      else {
+        afterContent.style.display = 'none';
+      }
+
+      if (Object.prototype.hasOwnProperty.call(logEntry, 'point') === true) {
+        pointContent.style.display = '';
+
+        pointTransformation.innerHTML = logEntry.point.transformationMatrix;
+        pointVector.innerHTML = logEntry.point.vector;
+        pointResult.innerHTML = logEntry.point.newVector;
+      }
+      else {
+        pointContent.style.display = 'none';
+      }
     }
   }
 
@@ -889,7 +984,12 @@ class Context {
       this.translate(this.#origin.x, this.#origin.y);
 
       newVectorOrigin = this.#applyMatrices([this.#transformationMatrix], ORIGIN);
+
+      this.#addPointLogEntry('Origin', ORIGIN, newVectorOrigin);
+
       newVector = this.#applyMatrices([this.#transformationMatrix], vector);
+
+      this.#addPointLogEntry('End / Tip Line Start', vector, newVector);
 
       this.#ctx.lineWidth = 2 * Math.min(Math.abs(this.#zoom.x), Math.abs(this.#zoom.y));
       this.#ctx.strokeStyle = '#ffffff';
@@ -910,9 +1010,13 @@ class Context {
 
       newVectorTip1 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
 
+      this.#addPointLogEntry('Tip Line 1 End', vectorTip, newVectorTip1);
+
       this.rotate(-wing * 2);
 
       newVectorTip2 = this.#applyMatrices([this.#transformationMatrix], vectorTip);
+
+      this.#addPointLogEntry('Tip Line 2 End', vectorTip, newVectorTip2);
     this.restore();
 
     this.#ctx.beginPath();
@@ -952,6 +1056,8 @@ class Context {
       for (let i = 0; i < points.length; ++i) {
         const point = points[i];
         const newPoint = this.#applyMatrices([this.#transformationMatrix], point);
+
+        this.#addPointLogEntry(i, point, newPoint);
 
         if (i === 0) {
           this.#ctx.moveTo(newPoint.get(0, 0), newPoint.get(1, 0));
