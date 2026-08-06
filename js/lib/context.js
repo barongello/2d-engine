@@ -1022,7 +1022,12 @@ class Context {
     this.#ctx.strokeStyle = strokeColor;
 
     const newStart = this.#applyMatrices([this.#transformationMatrix], start);
+
+    this.#addPointLogEntry('Line Start', start, newStart);
+
     const newEnd = this.#applyMatrices([this.#transformationMatrix], end);
+
+    this.#addPointLogEntry('Line End', end, newEnd);
 
     this.#ctx.beginPath();
       this.#ctx.moveTo(newStart.get(0, 0), newStart.get(1, 0));
