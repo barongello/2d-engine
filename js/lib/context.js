@@ -1,10 +1,5 @@
-const ORIGIN = MatrixPool.acquireVector3();
 const FONT_SIZE = 12;
 const LINE_GAP = 2;
-
-ORIGIN.set(0, 0, 0);
-ORIGIN.set(1, 0, 0);
-ORIGIN.set(2, 0, 1);
 
 class Context {
   #canvas = null;

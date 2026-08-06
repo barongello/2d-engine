@@ -20,7 +20,8 @@ const gridStep = document.getElementById('draw-grid-step');
 const axesCheckbox = document.getElementById('draw-axes');
 const axesWing = document.getElementById('draw-axes-wing');
 const vectorCheckbox = document.getElementById('draw-vector');
-const vectorWing = document.getElementById('draw-vector-wing');
+const vectorWingSize = document.getElementById('draw-vector-wing-size');
+const vectorWingAngle = document.getElementById('draw-vector-wing-angle');
 const rectangle1Checkbox = document.getElementById('draw-rectangle-1');
 const rectangle2Checkbox = document.getElementById('draw-rectangle-2');
 const rectangle3Checkbox = document.getElementById('draw-rectangle-3');
@@ -79,10 +80,6 @@ const vector1 = new Vector('Vector 1', 0, 0, 50, 100, '#ffffff');
 
 ctx.addChild(vector1);
 
-const vector2 = new Vector('Vector 2', 0, 0, -50, -100, '#ffffff');
-
-ctx.addChild(vector2);
-
 const rectangle2BasePosition = rectangle2.positionX();
 const rectangle4BasePosition = rectangle4.positionX();
 
@@ -134,7 +131,7 @@ function updateFrame(dt) {
 function drawFrame() {
   ctx.drawBegin();
     ctx.drawBackground();
-    ctx.drawGrid(Number(gridStep.value), Number(axesWing.value), gridCheckbox.checked === true, axesCheckbox.checked === true);
+    ctx.drawGrid(Number(gridStep.value), Number(axesWing.value), gridCheckbox.checked, axesCheckbox.checked);
     ctx.drawChildren();
 
     ctx.drawInfo(
@@ -142,7 +139,7 @@ function drawFrame() {
       speedMultiplier,
       gridCheckbox.checked === true ? Number(gridStep.value) : null,
       axesCheckbox.checked === true ? Number(axesWing.value) : null,
-      vectorCheckbox.checked === true ? Number(vectorWing.value) : null
+      vectorCheckbox.checked === true ? Number(vectorWingAngle.value) : null
     );
   ctx.drawEnd();
 }
@@ -781,11 +778,27 @@ axesCheckbox.addEventListener('change', event => {
 
 vectorCheckbox.addEventListener('change', event => {
   if (vectorCheckbox.checked === true) {
-    vectorWing.removeAttribute('disabled');
+    vectorWingSize.removeAttribute('disabled');
+    vectorWingAngle.removeAttribute('disabled');
   }
   else {
-    vectorWing.setAttribute('disabled', 'true');
+    vectorWingSize.setAttribute('disabled', 'true');
+    vectorWingAngle.setAttribute('disabled', 'true');
   }
+
+  vector1.setVisible(vectorCheckbox.checked);
+});
+
+vectorWingSize.addEventListener('input', event => {
+  const value = Number(vectorWingSize.value);
+
+  vector1.setWingSize(value);
+});
+
+vectorWingAngle.addEventListener('input', event => {
+  const value = Number(vectorWingAngle.value);
+
+  vector1.setWingAngle(value);
 });
 
 rectangle1Checkbox.addEventListener('change', event => {
